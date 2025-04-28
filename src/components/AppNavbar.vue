@@ -22,14 +22,26 @@
         </ul>
       </nav>
 
-      <!-- Navigasi Setelah Login -->
+      <!-- Navigasi Setelah Login (Dengan Master Dropdown) -->
       <nav v-else class="nav-menu" :class="{ 'active': mobileMenuOpen }">
         <ul class="nav-links">
           <!-- Menu Aplikasi (Router Links) -->
           <li><router-link :to="{ name: 'dashboard' }" @click="closeMobileMenu">Dashboard</router-link></li>
-          <li><router-link :to="{ name: 'user-management' }" @click="closeMobileMenu">Users</router-link></li>
-          <li><router-link :to="{ name: 'role-management' }" @click="closeMobileMenu">Roles</router-link></li>
-          <li><router-link :to="{ name: 'product-management' }" @click="closeMobileMenu">Products</router-link></li>
+
+          <!-- Master Dropdown -->
+          <li class="nav-item dropdown" :class="{ 'open': isMasterDropdownOpen }">
+            <a href="#" class="nav-link dropdown-toggle" @click.prevent="toggleMasterDropdown">
+              Master
+              <i class="fas fa-caret-down dropdown-caret"></i> <!-- Pastikan Font Awesome ada -->
+            </a>
+            <ul class="dropdown-menu" :class="{ 'show': isMasterDropdownOpen }">
+              <li><router-link :to="{ name: 'user-management' }" @click="closeMobileMenuAndDropdown">Users</router-link></li>
+              <li><router-link :to="{ name: 'role-management' }" @click="closeMobileMenuAndDropdown">Roles</router-link></li>
+              <li><router-link :to="{ name: 'product-management' }" @click="closeMobileMenuAndDropdown">Products</router-link></li>
+            </ul>
+          </li>
+          <!-- End Master Dropdown -->
+
           <!-- Info User & Logout (Mobile Only within Menu) -->
           <li class="nav-user-mobile">
             <span>Halo, {{ userName }} ({{ roleName }})</span>
@@ -49,7 +61,7 @@
           <span class="user-greeting">Halo, {{ userName }}</span>
           <span class="user-role">({{ roleName }})</span>
           <button @click="handleLogoutClick" class="btn btn-logout-desktop" title="Logout">
-            <i class="fas fa-sign-out-alt"></i> <!-- Pastikan Font Awesome dimuat -->
+            <i class="fas fa-sign-out-alt"></i> <!-- Pastikan Font Awesome ada -->
           </button>
         </div>
 
@@ -86,6 +98,7 @@ const emit = defineEmits(['login-click', 'logout-click']);
 // Reactive variables for component state
 const isScrolled = ref(false);
 const mobileMenuOpen = ref(false);
+const isMasterDropdownOpen = ref(false); // State for Master dropdown
 
 // --- Event Handlers ---
 
@@ -97,28 +110,44 @@ const handleScroll = () => {
 // Toggle mobile menu visibility
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value;
+  // Close dropdown when closing mobile menu
+  if (!mobileMenuOpen.value) {
+    isMasterDropdownOpen.value = false;
+  }
 };
 
-// Close mobile menu (used when clicking links or logo)
+// Close mobile menu (used when clicking non-dropdown links or logo)
 const closeMobileMenu = () => {
   mobileMenuOpen.value = false;
+  isMasterDropdownOpen.value = false; // Also close dropdown
+};
+
+// Toggle Master dropdown visibility
+const toggleMasterDropdown = () => {
+  isMasterDropdownOpen.value = !isMasterDropdownOpen.value;
+};
+
+// Close mobile menu AND Master dropdown (used for dropdown links)
+const closeMobileMenuAndDropdown = () => {
+  mobileMenuOpen.value = false;
+  isMasterDropdownOpen.value = false;
 };
 
 // Emit login event and close mobile menu
 const triggerLogin = () => {
   emit('login-click');
-  closeMobileMenu();
+  closeMobileMenu(); // Will also close dropdown if open
 };
 
 // Emit logout event and close mobile menu
 const handleLogoutClick = () => {
   emit('logout-click');
-  closeMobileMenu();
+  closeMobileMenu(); // Will also close dropdown if open
 };
 
 // Handle clicks on scroll links (Home, Produk, etc.)
 const handleScrollToSection = (selector) => {
-  closeMobileMenu();
+  closeMobileMenu(); // Will also close dropdown if open
   // If currently not on the home page, navigate there first
   if (route.name !== 'home') {
     router.push({ name: 'home' }).then(() => {
@@ -148,28 +177,52 @@ const handleScrollToSection = (selector) => {
 // Add scroll listener when component mounts
 onMounted(() => {
   window.addEventListener('scroll', handleScroll);
+  // Optional: Add click outside listener for desktop dropdown closing
+  // document.addEventListener('click', handleClickOutside);
 });
 
 // Remove scroll listener when component unmounts
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
+  // Optional: Remove click outside listener
+  // document.removeEventListener('click', handleClickOutside);
 });
+
+/*
+// Optional: Click outside handler (needs refinement based on exact DOM structure/refs)
+const handleClickOutside = (event) => {
+  const dropdownElement = document.querySelector('.nav-item.dropdown'); // Consider using a ref
+  if (isMasterDropdownOpen.value && dropdownElement && !dropdownElement.contains(event.target)) {
+    isMasterDropdownOpen.value = false;
+  }
+};
+*/
 </script>
 
-
 <style scoped>
-/* --- Existing Styles (Copied from your request) --- */
+/* --- Base Variables (Optional but recommended) --- */
+:root {
+  --primary-color: #007bff;
+  --secondary-color: #6c757d;
+  --accent-color: #dc3545;
+  --accent-dark: #bd2130;
+  --white: #fff;
+  --text-color: #333;
+  --light-text-color: #6c757d;
+  --navbar-height: 70px;
+  --border-color: #eee;
+}
 
-/* Navbar */
+/* --- Navbar Base --- */
 .navbar {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   z-index: 100;
-  background-color: var(--white, #fff); /* Added default */
+  background-color: var(--white);
   padding: 15px 0;
-  height: var(--navbar-height, 70px); /* Added default */
+  height: var(--navbar-height);
   transition: background-color 0.3s ease, box-shadow 0.3s ease, padding 0.3s ease, height 0.3s ease;
   border-bottom: 1px solid transparent;
 }
@@ -177,25 +230,25 @@ onUnmounted(() => {
   background-color: rgba(255, 255, 255, 0.98);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   padding: 10px 0;
-  height: calc(var(--navbar-height, 70px) - 10px); /* Adjust height */
-  border-bottom: 1px solid #eee;
+  height: calc(var(--navbar-height) - 10px);
+  border-bottom: 1px solid var(--border-color);
 }
 .nav-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
   height: 100%;
-  max-width: 1200px; /* Example container width */
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 0 15px; /* Container padding */
+  padding: 0 15px;
 }
 
-/* Logo */
+/* --- Logo --- */
 .logo {
   display: flex;
   align-items: center;
   text-decoration: none;
-  color: var(--primary-color, #007bff); /* Added default */
+  color: var(--primary-color);
   flex-shrink: 0;
 }
 .logo-img {
@@ -209,17 +262,16 @@ onUnmounted(() => {
 .logo-text {
   font-size: 1.4rem;
   font-weight: 700;
-  color: var(--primary-color, #007bff);
+  color: var(--primary-color);
 }
 
-/* --- Updated/Combined Navigation Menu Styles --- */
+/* --- Navigation Menu Base --- */
 .nav-menu {
-  display: flex; /* Keep display flex for desktop */
+  display: flex;
   align-items: center;
   flex-grow: 1;
-  justify-content: center; /* Center links on desktop */
+  justify-content: center;
 }
-
 .nav-links {
   list-style: none;
   display: flex;
@@ -229,23 +281,24 @@ onUnmounted(() => {
   margin: 0;
 }
 
-/* Style both regular links and router-links consistently */
+/* Style regular links, router-links, and dropdown toggles consistently */
 .nav-links li a,
-.nav-links li > .router-link { /* Target direct child router-link */
-  color: var(--text-color, #333); /* Added default */
+.nav-links li > .router-link, /* Target direct child router-link */
+.nav-links li > .dropdown-toggle { /* Target direct child dropdown toggle */
+  color: var(--text-color);
   font-weight: 600;
   font-size: 0.95rem;
   transition: color 0.3s ease;
   padding-bottom: 5px;
   position: relative;
   cursor: pointer;
-  text-decoration: none; /* Remove default underline */
+  text-decoration: none;
   white-space: nowrap;
 }
 
-/* Underline effect */
-.nav-links li a::after,
-.nav-links li > .router-link::after {
+/* Underline effect for non-dropdown items */
+.nav-links li:not(.dropdown) a::after,
+.nav-links li:not(.dropdown) > .router-link::after {
   content: '';
   position: absolute;
   width: 0;
@@ -253,27 +306,100 @@ onUnmounted(() => {
   bottom: -2px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(90deg, var(--primary-color, #007bff), var(--secondary-color, #6c757d)); /* Added defaults */
+  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
   transition: width 0.3s ease;
 }
 
-/* Hover and Active states */
-.nav-links li a:hover,
-.nav-links li > .router-link:hover,
-.nav-links li .router-link-active { /* Active class for router-link */
-  color: var(--primary-color, #007bff);
+/* Hover and Active states for non-dropdown items */
+.nav-links li:not(.dropdown) a:hover,
+.nav-links li:not(.dropdown) > .router-link:hover,
+.nav-links li:not(.dropdown) .router-link-active { /* Active class for router-link */
+  color: var(--primary-color);
+}
+.nav-links li:not(.dropdown) a:hover::after,
+.nav-links li:not(.dropdown) > .router-link:hover::after,
+.nav-links li:not(.dropdown) .router-link-active::after {
+  width: 100%;
 }
 
-.nav-links li a:hover::after,
-.nav-links li > .router-link:hover::after,
-.nav-links li .router-link-active::after {
-  width: 100%;
+/* Style dropdown toggle hover/active separately */
+.nav-links li.dropdown > .dropdown-toggle:hover,
+.nav-links li.dropdown.open > .dropdown-toggle {
+  color: var(--primary-color);
 }
 
 /* Hide mobile-specific items on desktop */
 .nav-login-mobile,
 .nav-user-mobile {
     display: none;
+}
+
+/* --- Dropdown Specific Styles --- */
+.nav-item.dropdown {
+  position: relative; /* Needed for absolute positioning of dropdown menu */
+}
+.dropdown-toggle .dropdown-caret {
+  margin-left: 5px;
+  font-size: 0.8em;
+  transition: transform 0.3s ease;
+}
+/* Rotate caret when dropdown is open */
+.nav-item.dropdown.open .dropdown-caret {
+    transform: rotate(180deg);
+}
+.dropdown-menu {
+  display: none; /* Hidden by default */
+  position: absolute;
+  top: 100%; /* Position below the parent li */
+  left: 0;
+  min-width: 180px; /* Adjust as needed */
+  background-color: var(--white);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-radius: 5px;
+  list-style: none;
+  padding: 8px 0;
+  margin: 5px 0 0 0; /* Small gap from toggle */
+  z-index: 101; /* Ensure it's above other content */
+  opacity: 0; /* Start hidden for transition */
+  visibility: hidden;
+  transform: translateY(10px);
+  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+}
+/* Show dropdown menu */
+.dropdown-menu.show {
+  display: block;
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.dropdown-menu li {
+  width: 100%;
+}
+/* Style links inside dropdown */
+.dropdown-menu li a,
+.dropdown-menu li > .router-link {
+  display: block;
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-color);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  /* Reset styles from main nav links */
+  padding-bottom: 10px;
+  border-bottom: none;
+}
+.dropdown-menu li a::after, /* Remove underline effect */
+.dropdown-menu li > .router-link::after {
+    display: none;
+}
+.dropdown-menu li a:hover,
+.dropdown-menu li > .router-link:hover,
+.dropdown-menu li .router-link-active { /* Highlight active route in dropdown */
+  background-color: rgba(0, 123, 255, 0.05); /* Light primary background */
+  color: var(--primary-color);
 }
 
 /* --- Nav Actions (Right Side) --- */
@@ -283,19 +409,32 @@ onUnmounted(() => {
   gap: 15px;
   flex-shrink: 0;
 }
+/* Buttons Base */
+.btn {
+  padding: 8px 15px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  border: 1px solid transparent;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.btn-secondary {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+  color: var(--white);
+}
+.btn-secondary:hover {
+  background-color: #5a6268;
+  border-color: #545b62;
+}
 .login-btn-desktop {
   padding: 8px 25px;
-  font-weight: 600;
 }
-/* Style for mobile login button (inside menu) */
-.login-btn-mobile {
-  display: block; /* Will be shown in mobile menu */
-  width: 100%;
-  margin-top: 15px;
-  padding: 12px;
-  text-align: center;
-}
-
 /* User Info Desktop */
 .user-info-desktop {
   display: flex;
@@ -308,7 +447,7 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 .user-role {
-  color: var(--light-text-color, #6c757d); /* Added default */
+  color: var(--light-text-color);
   font-size: 0.85rem;
   margin-right: 5px;
   white-space: nowrap;
@@ -317,49 +456,23 @@ onUnmounted(() => {
   padding: 6px 10px;
   font-size: 0.9rem;
   background: transparent;
-  color: var(--accent-color, #dc3545); /* Added default */
-  border: 1px solid var(--accent-color, #dc3545);
+  color: var(--accent-color);
+  border: 1px solid var(--accent-color);
   border-radius: 5px;
   margin-left: 5px;
   line-height: 1;
-  transition: background-color 0.3s, color 0.3s;
-  cursor: pointer; /* Ensure pointer cursor */
+  cursor: pointer;
 }
 .btn-logout-desktop:hover {
-  background: rgba(220, 53, 69, 0.1); /* Use accent color for hover */
-  color: var(--accent-dark, #bd2130); /* Added default */
+  background: rgba(220, 53, 69, 0.1);
+  color: var(--accent-dark);
 }
 .btn-logout-desktop i {
-  font-size: 1em;
+  font-size: 1em; /* Use em for icon sizing relative to button font size */
+  vertical-align: middle;
 }
 
-/* User Info Mobile (Inside Collapsed Menu) */
-/* Styles are applied via media query */
-.nav-user-mobile span {
-  display: block;
-  margin-bottom: 10px;
-  font-size: 1rem;
-  color: var(--text-color, #333);
-  text-align: center; /* Center text in mobile menu */
-}
-.btn-logout-mobile {
-  padding: 10px 15px;
-  width: 100%;
-  background: var(--accent-color, #dc3545);
-  color: var(--white, #fff);
-  border: none;
-  font-size: 0.9rem;
-  font-weight: 600;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-.btn-logout-mobile:hover {
-  background: var(--accent-dark, #bd2130);
-}
-
-
-/* Mobile Menu Toggle (Burger) */
+/* --- Mobile Menu Toggle (Burger) --- */
 .mobile-menu-toggle {
   display: none; /* Hidden on desktop */
   flex-direction: column;
@@ -376,7 +489,7 @@ onUnmounted(() => {
   display: block;
   width: 25px;
   height: 3px;
-  background-color: var(--primary-color, #007bff);
+  background-color: var(--primary-color);
   border-radius: 2px;
   transition: all 0.3s ease-in-out;
 }
@@ -391,34 +504,42 @@ onUnmounted(() => {
   transform: translateY(-8px) rotate(-45deg);
 }
 
+
 /* --- Responsive Styles --- */
-@media (max-width: 992px) { /* Adjust breakpoint if needed */
+@media (max-width: 992px) {
   .nav-links {
       gap: 25px; /* Reduce gap on medium screens */
   }
 }
 
 @media (max-width: 768px) {
+  /* --- Mobile Menu General --- */
   .nav-menu {
-    position: fixed; /* Position fixed for mobile */
-    top: var(--navbar-height, 70px); /* Start below navbar */
+    position: fixed;
+    top: var(--navbar-height); /* Start below navbar (consider scrolled height?) */
+    .navbar.scrolled & {
+        top: calc(var(--navbar-height) - 10px); /* Adjust if navbar shrinks */
+    }
     left: 0;
     width: 100%;
-    height: calc(100vh - var(--navbar-height, 70px)); /* Full remaining height */
-    background-color: var(--white, #fff);
+    height: calc(100vh - var(--navbar-height));
+     .navbar.scrolled & {
+        height: calc(100vh - (var(--navbar-height) - 10px));
+     }
+    background-color: var(--white);
     flex-direction: column;
     align-items: center;
-    justify-content: flex-start; /* Align items to top */
+    justify-content: flex-start;
     padding-top: 30px;
     /* Slide in from right effect */
     transform: translateX(100%);
-    transition: transform 0.3s ease-in-out;
+    transition: transform 0.3s ease-in-out, top 0.3s ease; /* Add top transition */
     box-shadow: -2px 0 5px rgba(0,0,0,0.1);
     overflow-y: auto; /* Allow scroll if menu is long */
-    /* Make nav-menu visible when mobile-open class is added to header */
-    .navbar.mobile-open & { /* Use parent class */
+  }
+  /* Make nav-menu visible when mobile-open class is added to header */
+  .navbar.mobile-open .nav-menu {
       transform: translateX(0);
-    }
   }
 
   .nav-links {
@@ -432,19 +553,25 @@ onUnmounted(() => {
 
   .nav-links li {
     width: 100%;
-    border-bottom: 1px solid #eee; /* Separator line */
+    border-bottom: 1px solid var(--border-color);
   }
    .nav-links li:last-child {
-       border-bottom: none; /* No border for last item */
+       border-bottom: none; /* No border for last standard item */
+   }
+   /* Remove border from dropdown container itself in mobile */
+   .nav-links li.dropdown {
+       border-bottom: none;
    }
 
   /* Adjust link padding for mobile */
   .nav-links li a,
-  .nav-links li > .router-link {
-    display: block; /* Make links full width */
+  .nav-links li > .router-link,
+  .nav-links li > .dropdown-toggle { /* Include dropdown toggle */
+    display: block;
     padding: 18px 0;
     width: 100%;
     font-size: 1rem;
+    position: relative; /* Needed for caret absolute positioning */
   }
    /* Hide underline effect on mobile */
    .nav-links li a::after,
@@ -452,26 +579,118 @@ onUnmounted(() => {
        display: none;
    }
 
-  /* Show mobile-specific items */
+  /* --- Mobile Dropdown Specific Styles --- */
+  .nav-item.dropdown {
+      position: static; /* Reset position for mobile */
+  }
+  /* Style mobile dropdown toggle like other mobile links */
+  .nav-links li.dropdown > .dropdown-toggle {
+     border-bottom: 1px solid var(--border-color); /* Add border to the toggle itself */
+  }
+  .dropdown-toggle .dropdown-caret {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      transition: transform 0.3s ease;
+      margin-left: 0; /* Reset margin */
+  }
+  .nav-item.dropdown.open .dropdown-caret {
+      transform: translateY(-50%) rotate(180deg); /* Adjust rotation */
+  }
+
+  .dropdown-menu {
+      /* Reset desktop positioning & appearance */
+      position: static;
+      display: none; /* Still hidden by default */
+      width: 100%;
+      background-color: #f8f9fa; /* Slightly different background for nesting */
+      border: none;
+      box-shadow: none;
+      border-radius: 0;
+      padding: 0;
+      margin: 0;
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      /* Use max-height for smooth slide down/up */
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease-out;
+  }
+  /* Show mobile dropdown menu */
+  .dropdown-menu.show {
+      display: block; /* Need block for max-height transition */
+      max-height: 500px; /* Or a sufficiently large value */
+      border-bottom: 1px solid var(--border-color); /* Add border below the whole dropdown */
+  }
+  .dropdown-menu li {
+      border-bottom: 1px dotted #ddd; /* Separator inside dropdown */
+  }
+   .dropdown-menu li:last-child {
+       border-bottom: none;
+   }
+  .dropdown-menu li a,
+  .dropdown-menu li > .router-link {
+      padding: 15px 20px; /* Adjust padding */
+      font-size: 0.95rem;
+      text-align: center; /* Center text */
+      background-color: transparent; /* Ensure no hover background persists */
+      color: var(--text-color);
+  }
+  .dropdown-menu li a:hover,
+  .dropdown-menu li > .router-link:hover,
+  .dropdown-menu li .router-link-active {
+      background-color: rgba(0, 123, 255, 0.08); /* Slightly stronger hover/active */
+      color: var(--primary-color);
+  }
+
+  /* Show mobile-specific items and style them */
   .nav-login-mobile,
   .nav-user-mobile {
       display: block; /* Show these list items */
       border-top: none; /* Remove potential double border */
       margin-top: 0;
-      padding-top: 0;
-      border-bottom: none;
+      padding: 15px 0; /* Add padding around content */
+      border-bottom: none; /* Ensure no double borders */
+      width: 100%; /* Make full width */
   }
-  /* Add padding/margin for buttons inside mobile menu */
-  .nav-login-mobile .login-btn-mobile,
-  .nav-user-mobile .btn-logout-mobile {
-      margin-top: 15px;
-      margin-bottom: 15px;
+  .login-btn-mobile {
+    display: block;
+    width: auto; /* Let button size naturally or set specific width */
+    max-width: 200px; /* Example max width */
+    margin: 0 auto; /* Center button */
+    padding: 12px 25px;
+    text-align: center;
   }
    .nav-user-mobile span {
-       padding-top: 15px; /* Space above user greeting */
+       display: block;
+       margin-bottom: 10px;
+       font-size: 1rem;
+       color: var(--text-color);
+       text-align: center;
    }
+  .btn-logout-mobile {
+    padding: 10px 15px;
+    width: auto; /* Let button size naturally */
+    max-width: 200px; /* Example max width */
+    margin: 0 auto; /* Center button */
+    background: var(--accent-color);
+    color: var(--white);
+    border: none;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    display: block; /* Ensure it's block for centering */
+  }
+  .btn-logout-mobile:hover {
+    background: var(--accent-dark);
+  }
 
-  /* Adjust right-side actions */
+
+  /* --- Final Mobile Adjustments --- */
   .nav-actions {
     gap: 10px;
   }
