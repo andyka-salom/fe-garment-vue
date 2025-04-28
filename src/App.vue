@@ -109,7 +109,7 @@ onMounted(() => {
     try {
       const userData = JSON.parse(userDataString);
       isUserLoggedIn.value = true;
-      loggedInUserName.value = userData.username || userData.name || 'Pengguna';
+      loggedInUserName.value = userData.user_name ||'Pengguna';
       loggedInUserRole.value = userData.role || 'User';
     } catch (e) {
       localStorage.removeItem('authToken');

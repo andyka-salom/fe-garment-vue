@@ -3,6 +3,7 @@
     <div class="container nav-container">
       <!-- Logo -->
       <router-link :to="{ name: 'home' }" class="logo" @click="closeMobileMenu">
+        <!-- Ganti '/logo.png' dengan path logo Anda -->
         <img src="/logo.png" alt="Logo GarmenKeren" class="logo-img" />
         <span class="logo-text">GarmenKeren</span>
       </router-link>
@@ -32,19 +33,21 @@
           <li class="nav-item dropdown" :class="{ 'open': isMasterDropdownOpen }">
             <a href="#" class="nav-link dropdown-toggle" @click.prevent="toggleMasterDropdown">
               Master
-              <i class="fas fa-caret-down dropdown-caret"></i> <!-- Pastikan Font Awesome ada -->
+              <!-- Pastikan Font Awesome tersedia atau ganti ikon -->
+              <i class="fas fa-caret-down dropdown-caret"></i>
             </a>
             <ul class="dropdown-menu" :class="{ 'show': isMasterDropdownOpen }">
               <li><router-link :to="{ name: 'user-management' }" @click="closeMobileMenuAndDropdown">Users</router-link></li>
               <li><router-link :to="{ name: 'role-management' }" @click="closeMobileMenuAndDropdown">Roles</router-link></li>
               <li><router-link :to="{ name: 'product-management' }" @click="closeMobileMenuAndDropdown">Products</router-link></li>
+              <li><router-link :to="{ name: 'category-management' }" @click="closeMobileMenuAndDropdown">Categories</router-link></li> <!-- Link Kategori Ditambahkan -->
             </ul>
           </li>
           <!-- End Master Dropdown -->
 
           <!-- Info User & Logout (Mobile Only within Menu) -->
           <li class="nav-user-mobile">
-            <span>Halo, {{ userName }} ({{ roleName }})</span>
+            <span>Halo, {{ userName || 'User' }} ({{ roleName || 'Role' }})</span>
             <button @click="handleLogoutClick" class="btn btn-logout-mobile">Logout</button>
           </li>
         </ul>
@@ -58,10 +61,11 @@
         </button>
         <!-- Info User & Logout Desktop (Jika sudah login) -->
         <div v-else class="user-info-desktop">
-          <span class="user-greeting">Halo, {{ userName }}</span>
-          <span class="user-role">({{ roleName }})</span>
+          <span class="user-greeting">Halo, {{ userName || 'User' }}</span>
+          <span class="user-role">({{ roleName || 'Role' }})</span>
           <button @click="handleLogoutClick" class="btn btn-logout-desktop" title="Logout">
-            <i class="fas fa-sign-out-alt"></i> <!-- Pastikan Font Awesome ada -->
+             <!-- Pastikan Font Awesome tersedia atau ganti ikon -->
+            <i class="fas fa-sign-out-alt"></i>
           </button>
         </div>
 
@@ -191,9 +195,11 @@ onUnmounted(() => {
 /*
 // Optional: Click outside handler (needs refinement based on exact DOM structure/refs)
 const handleClickOutside = (event) => {
-  const dropdownElement = document.querySelector('.nav-item.dropdown'); // Consider using a ref
-  if (isMasterDropdownOpen.value && dropdownElement && !dropdownElement.contains(event.target)) {
-    isMasterDropdownOpen.value = false;
+  // You might need to use refs on the dropdown toggle and menu
+  // for a more robust implementation
+  const dropdownElement = event.target.closest('.nav-item.dropdown');
+  if (isMasterDropdownOpen.value && !dropdownElement) {
+     isMasterDropdownOpen.value = false;
   }
 };
 */
@@ -202,15 +208,18 @@ const handleClickOutside = (event) => {
 <style scoped>
 /* --- Base Variables (Optional but recommended) --- */
 :root {
-  --primary-color: #007bff;
-  --secondary-color: #6c757d;
-  --accent-color: #dc3545;
+  --primary-color: #0d6efd; /* Bootstrap Primary Blue */
+  --secondary-color: #6c757d; /* Bootstrap Secondary Gray */
+  --accent-color: #dc3545; /* Bootstrap Danger Red */
   --accent-dark: #bd2130;
   --white: #fff;
-  --text-color: #333;
+  --text-color: #212529; /* Bootstrap Default Text */
   --light-text-color: #6c757d;
   --navbar-height: 70px;
-  --border-color: #eee;
+  --border-color: #dee2e6; /* Bootstrap Border Color */
+  --link-hover-color: #0a58ca; /* Darker blue for hover */
+  --dropdown-bg: var(--white);
+  --dropdown-hover-bg: #e9ecef; /* Bootstrap Light Gray */
 }
 
 /* --- Navbar Base --- */
@@ -219,7 +228,7 @@ const handleClickOutside = (event) => {
   top: 0;
   left: 0;
   width: 100%;
-  z-index: 100;
+  z-index: 1030; /* Bootstrap default z-index for fixed navbar */
   background-color: var(--white);
   padding: 15px 0;
   height: var(--navbar-height);
@@ -228,7 +237,7 @@ const handleClickOutside = (event) => {
 }
 .navbar.scrolled {
   background-color: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); /* Bootstrap small shadow */
   padding: 10px 0;
   height: calc(var(--navbar-height) - 10px);
   border-bottom: 1px solid var(--border-color);
@@ -249,34 +258,35 @@ const handleClickOutside = (event) => {
   align-items: center;
   text-decoration: none;
   color: var(--primary-color);
-  flex-shrink: 0;
+  flex-shrink: 0; /* Prevent logo from shrinking */
 }
 .logo-img {
-  height: 40px;
+  height: 40px; /* Adjust as needed */
   margin-right: 10px;
   transition: height 0.3s ease;
 }
 .navbar.scrolled .logo-img {
-  height: 35px;
+  height: 35px; /* Slightly smaller when scrolled */
 }
 .logo-text {
-  font-size: 1.4rem;
-  font-weight: 700;
+  font-size: 1.5rem; /* Adjust size */
+  font-weight: 700; /* Bold */
   color: var(--primary-color);
+  white-space: nowrap; /* Prevent wrapping */
 }
 
 /* --- Navigation Menu Base --- */
 .nav-menu {
   display: flex;
   align-items: center;
-  flex-grow: 1;
-  justify-content: center;
+  flex-grow: 1; /* Allow menu to take up space */
+  justify-content: center; /* Center links horizontally */
 }
 .nav-links {
   list-style: none;
   display: flex;
   align-items: center;
-  gap: 35px; /* Desktop gap */
+  gap: 35px; /* Spacing between desktop links */
   padding: 0;
   margin: 0;
 }
@@ -286,14 +296,14 @@ const handleClickOutside = (event) => {
 .nav-links li > .router-link, /* Target direct child router-link */
 .nav-links li > .dropdown-toggle { /* Target direct child dropdown toggle */
   color: var(--text-color);
-  font-weight: 600;
-  font-size: 0.95rem;
+  font-weight: 500; /* Medium weight */
+  font-size: 1rem; /* Standard font size */
   transition: color 0.3s ease;
-  padding-bottom: 5px;
+  padding-bottom: 5px; /* Space for potential underline */
   position: relative;
   cursor: pointer;
   text-decoration: none;
-  white-space: nowrap;
+  white-space: nowrap; /* Prevent wrapping */
 }
 
 /* Underline effect for non-dropdown items */
@@ -306,7 +316,7 @@ const handleClickOutside = (event) => {
   bottom: -2px;
   left: 50%;
   transform: translateX(-50%);
-  background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+  background: linear-gradient(90deg, var(--primary-color), var(--link-hover-color));
   transition: width 0.3s ease;
 }
 
@@ -314,7 +324,7 @@ const handleClickOutside = (event) => {
 .nav-links li:not(.dropdown) a:hover,
 .nav-links li:not(.dropdown) > .router-link:hover,
 .nav-links li:not(.dropdown) .router-link-active { /* Active class for router-link */
-  color: var(--primary-color);
+  color: var(--link-hover-color);
 }
 .nav-links li:not(.dropdown) a:hover::after,
 .nav-links li:not(.dropdown) > .router-link:hover::after,
@@ -325,7 +335,7 @@ const handleClickOutside = (event) => {
 /* Style dropdown toggle hover/active separately */
 .nav-links li.dropdown > .dropdown-toggle:hover,
 .nav-links li.dropdown.open > .dropdown-toggle {
-  color: var(--primary-color);
+  color: var(--link-hover-color);
 }
 
 /* Hide mobile-specific items on desktop */
@@ -339,9 +349,10 @@ const handleClickOutside = (event) => {
   position: relative; /* Needed for absolute positioning of dropdown menu */
 }
 .dropdown-toggle .dropdown-caret {
-  margin-left: 5px;
+  margin-left: 6px;
   font-size: 0.8em;
   transition: transform 0.3s ease;
+  display: inline-block; /* Ensure transform works */
 }
 /* Rotate caret when dropdown is open */
 .nav-item.dropdown.open .dropdown-caret {
@@ -350,21 +361,21 @@ const handleClickOutside = (event) => {
 .dropdown-menu {
   display: none; /* Hidden by default */
   position: absolute;
-  top: 100%; /* Position below the parent li */
+  top: calc(100% + 5px); /* Position below the parent li with a small gap */
   left: 0;
-  min-width: 180px; /* Adjust as needed */
-  background-color: var(--white);
+  min-width: 200px; /* Adjust as needed */
+  background-color: var(--dropdown-bg);
   border: 1px solid var(--border-color);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border-radius: 5px;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15); /* Bootstrap dropdown shadow */
+  border-radius: 0.375rem; /* Bootstrap border radius */
   list-style: none;
-  padding: 8px 0;
-  margin: 5px 0 0 0; /* Small gap from toggle */
-  z-index: 101; /* Ensure it's above other content */
+  padding: 0.5rem 0; /* Bootstrap padding */
+  margin: 0;
+  z-index: 1000; /* Bootstrap default */
   opacity: 0; /* Start hidden for transition */
   visibility: hidden;
   transform: translateY(10px);
-  transition: opacity 0.2s ease, visibility 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.15s ease-in-out, visibility 0.15s ease-in-out, transform 0.15s ease-in-out;
 }
 /* Show dropdown menu */
 .dropdown-menu.show {
@@ -380,15 +391,17 @@ const handleClickOutside = (event) => {
 .dropdown-menu li a,
 .dropdown-menu li > .router-link {
   display: block;
-  padding: 10px 20px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  padding: 0.5rem 1rem; /* Bootstrap item padding */
+  font-size: 0.95rem;
+  font-weight: 400;
   color: var(--text-color);
   text-decoration: none;
   white-space: nowrap;
+  background-color: transparent;
+  border: 0;
   transition: background-color 0.2s ease, color 0.2s ease;
   /* Reset styles from main nav links */
-  padding-bottom: 10px;
+  padding-bottom: 0.5rem; /* Consistent padding */
   border-bottom: none;
 }
 .dropdown-menu li a::after, /* Remove underline effect */
@@ -398,8 +411,8 @@ const handleClickOutside = (event) => {
 .dropdown-menu li a:hover,
 .dropdown-menu li > .router-link:hover,
 .dropdown-menu li .router-link-active { /* Highlight active route in dropdown */
-  background-color: rgba(0, 123, 255, 0.05); /* Light primary background */
-  color: var(--primary-color);
+  background-color: var(--dropdown-hover-bg);
+  color: var(--text-color); /* Keep text color standard on hover, or change if needed */
 }
 
 /* --- Nav Actions (Right Side) --- */
@@ -407,21 +420,22 @@ const handleClickOutside = (event) => {
   display: flex;
   align-items: center;
   gap: 15px;
-  flex-shrink: 0;
+  flex-shrink: 0; /* Prevent actions from shrinking */
 }
 /* Buttons Base */
 .btn {
-  padding: 8px 15px;
-  border-radius: 5px;
+  padding: 0.375rem 0.75rem; /* Bootstrap default btn padding */
+  border-radius: 0.375rem; /* Bootstrap default */
   cursor: pointer;
-  font-weight: 600;
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+  font-weight: 500;
+  transition: background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
   border: 1px solid transparent;
   text-decoration: none;
   display: inline-block;
   text-align: center;
-  font-size: 0.9rem;
-  line-height: 1.4;
+  font-size: 1rem;
+  line-height: 1.5;
+  user-select: none;
 }
 .btn-secondary {
   background-color: var(--secondary-color);
@@ -429,22 +443,23 @@ const handleClickOutside = (event) => {
   color: var(--white);
 }
 .btn-secondary:hover {
-  background-color: #5a6268;
+  background-color: #5a6268; /* Darker gray */
   border-color: #545b62;
 }
 .login-btn-desktop {
-  padding: 8px 25px;
+  padding: 0.375rem 1rem; /* Slightly more padding */
 }
 /* User Info Desktop */
 .user-info-desktop {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
 }
 .user-greeting {
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
+  color: var(--text-color);
 }
 .user-role {
   color: var(--light-text-color);
@@ -453,22 +468,28 @@ const handleClickOutside = (event) => {
   white-space: nowrap;
 }
 .btn-logout-desktop {
-  padding: 6px 10px;
+  padding: 5px 8px;
   font-size: 0.9rem;
   background: transparent;
   color: var(--accent-color);
-  border: 1px solid var(--accent-color);
-  border-radius: 5px;
+  border: 1px solid transparent; /* No border initially */
+  border-radius: 50%; /* Make it circular */
   margin-left: 5px;
   line-height: 1;
   cursor: pointer;
+  width: 32px; /* Fixed width */
+  height: 32px; /* Fixed height */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 .btn-logout-desktop:hover {
-  background: rgba(220, 53, 69, 0.1);
+  background: rgba(220, 53, 69, 0.1); /* Light red background */
   color: var(--accent-dark);
+  border-color: transparent;
 }
 .btn-logout-desktop i {
-  font-size: 1em; /* Use em for icon sizing relative to button font size */
+  font-size: 1.1em; /* Adjust icon size */
   vertical-align: middle;
 }
 
@@ -483,7 +504,8 @@ const handleClickOutside = (event) => {
   border: none;
   cursor: pointer;
   padding: 0;
-  z-index: 101; /* Above nav menu */
+  z-index: 1031; /* Above navbar content, below modal backdrop if any */
+  margin-left: 10px; /* Space from other actions */
 }
 .mobile-menu-toggle .bar {
   display: block;
@@ -510,18 +532,23 @@ const handleClickOutside = (event) => {
   .nav-links {
       gap: 25px; /* Reduce gap on medium screens */
   }
+  .logo-text {
+      font-size: 1.4rem;
+  }
 }
 
 @media (max-width: 768px) {
   /* --- Mobile Menu General --- */
   .nav-menu {
     position: fixed;
-    top: var(--navbar-height); /* Start below navbar (consider scrolled height?) */
-    .navbar.scrolled & {
-        top: calc(var(--navbar-height) - 10px); /* Adjust if navbar shrinks */
+    /* Dynamically calculate top based on current navbar height */
+    top: var(--navbar-height); /* Default */
+    .navbar.scrolled & { /* Use parent class to adjust */
+        top: calc(var(--navbar-height) - 10px);
     }
     left: 0;
     width: 100%;
+    /* Dynamically calculate height */
     height: calc(100vh - var(--navbar-height));
      .navbar.scrolled & {
         height: calc(100vh - (var(--navbar-height) - 10px));
@@ -536,6 +563,7 @@ const handleClickOutside = (event) => {
     transition: transform 0.3s ease-in-out, top 0.3s ease; /* Add top transition */
     box-shadow: -2px 0 5px rgba(0,0,0,0.1);
     overflow-y: auto; /* Allow scroll if menu is long */
+    z-index: 1029; /* Below navbar, above content */
   }
   /* Make nav-menu visible when mobile-open class is added to header */
   .navbar.mobile-open .nav-menu {
@@ -556,7 +584,7 @@ const handleClickOutside = (event) => {
     border-bottom: 1px solid var(--border-color);
   }
    .nav-links li:last-child {
-       border-bottom: none; /* No border for last standard item */
+       /* No border for last standard item OR last visible item */
    }
    /* Remove border from dropdown container itself in mobile */
    .nav-links li.dropdown {
@@ -568,24 +596,33 @@ const handleClickOutside = (event) => {
   .nav-links li > .router-link,
   .nav-links li > .dropdown-toggle { /* Include dropdown toggle */
     display: block;
-    padding: 18px 0;
+    padding: 18px 10px; /* Adjust padding */
     width: 100%;
-    font-size: 1rem;
+    font-size: 1.05rem;
     position: relative; /* Needed for caret absolute positioning */
+    font-weight: 500;
   }
    /* Hide underline effect on mobile */
    .nav-links li a::after,
    .nav-links li > .router-link::after {
        display: none;
    }
+   .nav-links li a:hover,
+   .nav-links li > .router-link:hover,
+   .nav-links li .router-link-active {
+       color: var(--primary-color); /* Simple color change on hover/active */
+   }
+
 
   /* --- Mobile Dropdown Specific Styles --- */
   .nav-item.dropdown {
       position: static; /* Reset position for mobile */
+      width: 100%;
   }
   /* Style mobile dropdown toggle like other mobile links */
   .nav-links li.dropdown > .dropdown-toggle {
-     border-bottom: 1px solid var(--border-color); /* Add border to the toggle itself */
+     /* Use parent li border */
+     border-bottom: none; /* Remove its own border if li has one */
   }
   .dropdown-toggle .dropdown-caret {
       position: absolute;
@@ -594,6 +631,7 @@ const handleClickOutside = (event) => {
       transform: translateY(-50%);
       transition: transform 0.3s ease;
       margin-left: 0; /* Reset margin */
+      font-size: 1em; /* Make caret slightly larger */
   }
   .nav-item.dropdown.open .dropdown-caret {
       transform: translateY(-50%) rotate(180deg); /* Adjust rotation */
@@ -617,12 +655,12 @@ const handleClickOutside = (event) => {
       max-height: 0;
       overflow: hidden;
       transition: max-height 0.3s ease-out;
+      border-bottom: 1px solid var(--border-color); /* Add border below the whole dropdown */
   }
   /* Show mobile dropdown menu */
   .dropdown-menu.show {
       display: block; /* Need block for max-height transition */
       max-height: 500px; /* Or a sufficiently large value */
-      border-bottom: 1px solid var(--border-color); /* Add border below the whole dropdown */
   }
   .dropdown-menu li {
       border-bottom: 1px dotted #ddd; /* Separator inside dropdown */
@@ -637,53 +675,65 @@ const handleClickOutside = (event) => {
       text-align: center; /* Center text */
       background-color: transparent; /* Ensure no hover background persists */
       color: var(--text-color);
+      font-weight: 400;
   }
   .dropdown-menu li a:hover,
   .dropdown-menu li > .router-link:hover,
   .dropdown-menu li .router-link-active {
-      background-color: rgba(0, 123, 255, 0.08); /* Slightly stronger hover/active */
+      background-color: rgba(0, 123, 255, 0.05); /* Lighter hover/active */
       color: var(--primary-color);
   }
 
   /* Show mobile-specific items and style them */
   .nav-login-mobile,
   .nav-user-mobile {
-      display: block; /* Show these list items */
-      border-top: none; /* Remove potential double border */
+      display: flex; /* Use flex for centering content */
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border-top: none;
       margin-top: 0;
-      padding: 15px 0; /* Add padding around content */
+      padding: 20px 0; /* More padding */
       border-bottom: none; /* Ensure no double borders */
-      width: 100%; /* Make full width */
+      width: 100%;
+  }
+  /* Make last REAL item have no border */
+  .nav-links li:has(+ .nav-login-mobile),
+  .nav-links li:has(+ .nav-user-mobile),
+  .nav-links li.dropdown:has(+ .nav-user-mobile) { /* Check if dropdown is last before user */
+      border-bottom: none;
   }
   .login-btn-mobile {
-    display: block;
+    display: inline-block; /* Allow centering */
     width: auto; /* Let button size naturally or set specific width */
-    max-width: 200px; /* Example max width */
-    margin: 0 auto; /* Center button */
-    padding: 12px 25px;
+    min-width: 150px;
+    margin-top: 10px; /* Space from potential text */
+    padding: 10px 20px;
     text-align: center;
+    font-size: 1rem;
   }
    .nav-user-mobile span {
        display: block;
-       margin-bottom: 10px;
+       margin-bottom: 15px; /* More space */
        font-size: 1rem;
        color: var(--text-color);
        text-align: center;
+       font-weight: 500;
    }
   .btn-logout-mobile {
-    padding: 10px 15px;
+    padding: 10px 20px;
     width: auto; /* Let button size naturally */
-    max-width: 200px; /* Example max width */
+    min-width: 150px;
     margin: 0 auto; /* Center button */
     background: var(--accent-color);
     color: var(--white);
     border: none;
-    font-size: 0.9rem;
-    font-weight: 600;
-    border-radius: 5px;
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 0.375rem;
     cursor: pointer;
-    transition: background-color 0.3s ease;
-    display: block; /* Ensure it's block for centering */
+    transition: background-color 0.15s ease-in-out;
+    display: inline-block; /* Ensure it's inline-block for centering */
   }
   .btn-logout-mobile:hover {
     background: var(--accent-dark);
