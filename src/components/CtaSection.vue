@@ -20,29 +20,25 @@
   
   <script setup>
   import { ref } from 'vue';
-  // import { onMounted } from 'vue';
-  // import AOS from 'aos'; // Jika pakai AOS
-  // onMounted(() => { AOS.init({ duration: 800, once: true }); });
   
   const email = ref('');
   const message = ref('');
   const isSuccess = ref(false);
   
   const subscribeNewsletter = () => {
-    // Simulasi subscribe (ganti dengan logika API call)
     console.log('Subscribing email:', email.value);
-    isSuccess.value = true; // Anggap sukses
+    isSuccess.value = true;
     message.value = 'Terima kasih! Kamu berhasil terdaftar.';
   
     // Reset setelah beberapa detik
     setTimeout(() => {
         message.value = '';
-        email.value = ''; // Kosongkan input
+        email.value = '';
     }, 5000);
   
     // Jika gagal:
-    // isSuccess.value = false;
-    // message.value = 'Oops! Terjadi kesalahan. Coba lagi nanti.';
+    isSuccess.value = false;
+    message.value = 'Oops! Terjadi kesalahan. Coba lagi nanti.';
   };
   </script>
   
@@ -50,11 +46,11 @@
   .cta-section {
     background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: var(--white);
-    padding: 100px 20px; /* Padding lebih besar */
+    padding: 100px 20px; 
   }
   
   .cta-container {
-      max-width: 700px; /* Batasi lebar konten */
+      max-width: 700px;
       text-align: center;
   }
   
@@ -68,7 +64,7 @@
       font-size: 1.1rem;
       margin-bottom: 2.5rem;
       opacity: 0.9;
-      color: var(--white); /* Pastikan warna teks putih */
+      color: var(--white);
       line-height: 1.7;
   }
   
@@ -78,17 +74,17 @@
       align-items: center;
       max-width: 500px;
       margin: 0 auto 1rem auto;
-      background-color: rgba(255, 255, 255, 0.15); /* Background input group */
-      border-radius: 30px; /* Rounded group */
+      background-color: rgba(255, 255, 255, 0.15);
+      border-radius: 30px;
       padding: 5px;
-      overflow: hidden; /* Agar tombol pas */
+      overflow: hidden;
   }
   
   .newsletter-form input[type="email"] {
       flex-grow: 1;
       padding: 15px 20px;
       border: none;
-      background: transparent; /* Transparan */
+      background: transparent;
       color: var(--white);
       font-size: 1rem;
       outline: none;
@@ -99,18 +95,17 @@
   }
   
   .newsletter-form button {
-      border-radius: 25px; /* Rounded button */
+      border-radius: 25px;
       padding: 12px 25px;
-      white-space: nowrap; /* Agar teks tidak wrap */
-      /* Ganti warna tombol agar kontras */
+      white-space: nowrap;
       background: var(--accent-color);
       color: var(--white);
       box-shadow: none;
       transition: background-color 0.3s ease;
   }
   .newsletter-form button:hover {
-      background: #ff8a8a; /* Warna hover */
-      transform: none; /* Hapus efek hover default */
+      background: #ff8a8a;
+      transform: none;
       box-shadow: none;
   }
   
@@ -120,10 +115,10 @@
       font-size: 0.9rem;
   }
   .subscribe-message.success {
-      color: #a7ffa7; /* Warna sukses */
+      color: #a7ffa7;
   }
   .subscribe-message:not(.success) {
-      color: #ffcaca; /* Warna error (jika ada) */
+      color: #ffcaca;
   }
   
   /* Responsive */
@@ -135,8 +130,8 @@
           font-size: 1rem;
       }
       .newsletter-form .form-group {
-          flex-direction: column; /* Tumpuk di mobile */
-          background: none; /* Hapus background group */
+          flex-direction: column;
+          background: none;
           padding: 0;
           gap: 15px;
       }

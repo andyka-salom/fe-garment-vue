@@ -85,7 +85,7 @@ const closeLoginModal = () => { showLoginModal.value = false; };
 const handleLoginSuccess = (userData) => {
   isUserLoggedIn.value = true;
   loggedInUserName.value = userData.user_name || 'Pengguna';
-  loggedInUserRole.value = userData.role || 'User';
+  loggedInUserRole.value = userData.role_name || 'User';
   showLoginModal.value = false;
   displayNotification(`Login berhasil! Selamat datang, ${loggedInUserName.value}.`, 'success');
   // Redirect sudah di LoginForm
@@ -110,7 +110,7 @@ onMounted(() => {
       const userData = JSON.parse(userDataString);
       isUserLoggedIn.value = true;
       loggedInUserName.value = userData.user_name ||'Pengguna';
-      loggedInUserRole.value = userData.role || 'User';
+      loggedInUserRole.value = userData.role_name || 'User';
     } catch (e) {
       localStorage.removeItem('authToken');
       localStorage.removeItem('userData');

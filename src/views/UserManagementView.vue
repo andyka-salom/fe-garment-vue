@@ -1,5 +1,5 @@
 <template>
-  <div class="user-manager-container"> <!-- Nama class container konsisten dengan style yang di-paste -->
+  <div class="user-manager-container">
     <header class="page-header">
       <h1 class="page-title">Manajemen Pengguna</h1>
       <button @click="openAddModal" class="btn btn-primary btn-lg" :disabled="isFetchingRoles">
@@ -9,7 +9,6 @@
       </button>
     </header>
 
-    <!-- Feedback Section (Struktur sama seperti Role) -->
     <div class="feedback-section">
         <div v-if="isLoading" class="alert alert-info d-flex align-items-center shadow-sm" role="alert">
             <div class="spinner-border spinner-border-sm me-3" role="status" aria-hidden="true"></div>
@@ -18,13 +17,11 @@
         <div v-if="error && !showModal" class="alert alert-danger shadow-sm" role="alert">
             <i class="fas fa-exclamation-triangle me-2"></i> {{ error }}
         </div>
-        <!-- Pesan empty state disesuaikan untuk user -->
         <div v-if="!isLoading && users.length === 0 && !error" class="alert alert-secondary text-center shadow-sm" role="alert">
             <i class="fas fa-users-slash me-2"></i> Belum ada data pengguna. Silakan tambahkan pengguna baru.
         </div>
     </div>
 
-    <!-- Tabel Users (Menggunakan struktur dan class dari Role) -->
     <div v-if="!isLoading && users.length > 0" class="table-container shadow-sm">
       <div class="table-responsive">
         <!-- Terapkan class modern-table, table-hover, align-middle -->
@@ -46,7 +43,6 @@
               <td class="fw-medium">{{ user.name }}</td>
               <td>{{ user.email }}</td>
               <td>
-                <!-- Menggunakan getRoleBadgeClass untuk menentukan warna badge -->
                 <span :class="['badge', getRoleBadgeClass(user.role_id)]">
                   {{ getRoleName(user.role_id) }}
                 </span>
@@ -60,14 +56,14 @@
                       class="btn btn-icon btn-outline-primary"
                       title="Edit User"
                       data-bs-toggle="tooltip" data-bs-placement="top">
-                     <i class="fas fa-pencil-alt"></i> <!-- Ikon konsisten -->
+                     <i class="fas fa-pencil-alt"></i>
                   </button>
                   <button
                       @click="confirmDeleteUser(user)"
                       class="btn btn-icon btn-outline-danger"
                       title="Delete User"
                       data-bs-toggle="tooltip" data-bs-placement="top">
-                     <i class="fas fa-trash-alt"></i> <!-- Ikon konsisten -->
+                     <i class="fas fa-trash-alt"></i>
                   </button>
                 </div>
               </td>
@@ -77,7 +73,6 @@
       </div>
     </div>
 
-    <!-- Modal (Struktur dan gaya modal tetap sama seperti versi modern User sebelumnya) -->
     <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
         <div class="modal-dialog modal-dialog-centered modal-lg">
           <div class="modal-content shadow-lg">
@@ -901,7 +896,6 @@ export default {
 }
 
 
-/* Responsive */
 @media (max-width: 768px) {
   .user-manager-container { padding: 1rem; } /* Sesuaikan padding */
   .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }

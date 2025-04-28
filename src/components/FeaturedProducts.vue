@@ -1,7 +1,6 @@
 <template>
     <section id="featured" class="featured-products">
       <div class="container">
-        <!-- Judul Section Diperbarui -->
         <h2 class="section-title">Produk Rumah Tangga Pilihan ✨</h2>
         <div class="product-grid">
           <div
@@ -12,22 +11,18 @@
             :data-aos-delay="product.id * 100"
           >
             <div class="product-image-wrapper">
-                <!-- Pastikan path gambar sesuai dengan produk rumah tangga -->
                 <img :src="product.imageUrl" :alt="product.name" class="product-image">
                 <div class="product-overlay">
                     <button class="btn btn-primary btn-view">Lihat Detail</button>
                 </div>
             </div>
             <div class="product-info">
-              <!-- Nama Produk Diperbarui -->
               <h3 class="product-name">{{ product.name }}</h3>
-              <!-- Harga Produk Diperbarui -->
               <p class="product-price">{{ formatCurrency(product.price) }}</p>
             </div>
           </div>
         </div>
         <div class="view-all-cta" data-aos="fade-up" data-aos-delay="400">
-            <!-- Teks Tombol CTA Diperbarui -->
             <a href="#" class="btn btn-secondary">Lihat Semua Produk Rumah</a>
         </div>
       </div>
@@ -36,39 +31,28 @@
   
   <script setup>
   import { ref } from 'vue';
-  // import AOS from 'aos'; // Jika pakai AOS
-  
-  // --- Data Produk Diperbarui untuk Barang Rumah Tangga ---
-  // Ganti imageUrl dengan path gambar Anda yang sebenarnya di folder /public
   const products = ref([
-    { id: 1, name: 'Kotak Penyimpanan Serbaguna (Set 3)', price: 129000, imageUrl: '/household1.jpg' }, // Ganti gambar
-    { id: 2, name: 'Set Alat Masak Anti Lengket (5 pcs)', price: 285000, imageUrl: '/household2.jpg' }, // Ganti gambar
-    { id: 3, name: 'Rak Dinding Minimalis Kayu Solid', price: 95000, imageUrl: '/household3.jpg' }, // Ganti gambar
-    // Anda bisa menambahkan lebih banyak produk di sini
-    // { id: 4, name: 'Lampu Meja Baca LED Fleksibel', price: 150000, imageUrl: '/household4.jpg' },
+    { id: 1, name: 'Kotak Penyimpanan Serbaguna (Set 3)', price: 129000, imageUrl: '/household1.jpg' },
+    { id: 2, name: 'Set Alat Masak Anti Lengket (5 pcs)', price: 285000, imageUrl: '/household2.jpg' },
+    { id: 3, name: 'Rak Dinding Minimalis Kayu Solid', price: 95000, imageUrl: '/household3.jpg' },
   ]);
   
-  // Fungsi format mata uang (tetap sama)
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
   };
   
-  // Jika pakai AOS
-  // import { onMounted } from 'vue'; // Jangan lupa import jika menggunakan onMounted
-  // onMounted(() => { AOS.init({ duration: 800, once: true }); });
   </script>
   
   <style scoped>
-  /* --- Style CSS (umumnya tidak perlu diubah signifikan, tapi bisa disesuaikan) --- */
   .featured-products { background-color: var(--light-gray); }
-  .section-title { /* Style judul tetap sama */
+  .section-title {
       text-align: center;
       font-size: 2.2rem;
       margin-bottom: 50px;
       position: relative;
       padding-bottom: 15px;
   }
-  h2.section-title::after { /* Style garis bawah judul tetap sama */
+  h2.section-title::after {
       content: '';
       position: absolute;
       bottom: 0;
@@ -85,8 +69,7 @@
   .product-image-wrapper {
       position: relative;
       overflow: hidden;
-      /* Anda mungkin ingin menyesuaikan aspect-ratio jika gambar produk rumah tangga berbeda */
-      aspect-ratio: 1 / 1; /* Contoh: rasio 1:1 (persegi), atau biarkan 3/4 */
+      aspect-ratio: 1 / 1;
   }
   .product-image { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease; }
   .product-card:hover .product-image { transform: scale(1.08); }

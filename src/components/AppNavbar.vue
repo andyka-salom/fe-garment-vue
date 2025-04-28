@@ -1,161 +1,97 @@
-<template>
-  <header class="navbar" :class="{ 'scrolled': isScrolled, 'mobile-open': mobileMenuOpen }">
-    <div class="container nav-container">
-      <!-- Logo -->
-      <router-link :to="{ name: 'home' }" class="logo" @click="closeMobileMenu">
-        <!-- Ganti '/logo.png' dengan path logo Anda -->
-        <img src="/logo.png" alt="Logo GarmenKeren" class="logo-img" />
-        <span class="logo-text">GarmenKeren</span>
-      </router-link>
-
-      <!-- Navigasi Utama (Jika belum login) -->
-      <nav v-if="!isLoggedIn" class="nav-menu" :class="{ 'active': mobileMenuOpen }">
-        <ul class="nav-links">
-          <!-- Link Scroll untuk Home Page -->
-          <li><a href="#hero" @click="handleScrollToSection('#hero')">Home</a></li>
-          <li><a href="#featured" @click="handleScrollToSection('#featured')">Produk</a></li>
-          <li><a href="#brand" @click="handleScrollToSection('#brand')">Merek</a></li>
-          <li><a href="#cta" @click="handleScrollToSection('#cta')">Kontak</a></li>
-          <!-- Tombol Login Mobile -->
-          <li class="nav-login-mobile">
-            <button class="btn btn-secondary login-btn-mobile" @click="triggerLogin">Login</button>
-          </li>
-        </ul>
-      </nav>
-
-      <!-- Navigasi Setelah Login (Dengan Master Dropdown) -->
-      <nav v-else class="nav-menu" :class="{ 'active': mobileMenuOpen }">
-        <ul class="nav-links">
-          <!-- Menu Aplikasi (Router Links) -->
-          <li><router-link :to="{ name: 'dashboard' }" @click="closeMobileMenu">Dashboard</router-link></li>
-
-          <!-- Master Dropdown -->
-          <li class="nav-item dropdown" :class="{ 'open': isMasterDropdownOpen }">
-            <a href="#" class="nav-link dropdown-toggle" @click.prevent="toggleMasterDropdown">
-              Master
-              <!-- Pastikan Font Awesome tersedia atau ganti ikon -->
-              <i class="fas fa-caret-down dropdown-caret"></i>
-            </a>
-            <ul class="dropdown-menu" :class="{ 'show': isMasterDropdownOpen }">
-              <li><router-link :to="{ name: 'user-management' }" @click="closeMobileMenuAndDropdown">Users</router-link></li>
-              <li><router-link :to="{ name: 'role-management' }" @click="closeMobileMenuAndDropdown">Roles</router-link></li>
-              <li><router-link :to="{ name: 'product-management' }" @click="closeMobileMenuAndDropdown">Products</router-link></li>
-              <li><router-link :to="{ name: 'category-management' }" @click="closeMobileMenuAndDropdown">Categories</router-link></li> <!-- Link Kategori Ditambahkan -->
-            </ul>
-          </li>
-          <!-- End Master Dropdown -->
-
-          <!-- Info User & Logout (Mobile Only within Menu) -->
-          <li class="nav-user-mobile">
-            <span>Halo, {{ userName || 'User' }} ({{ roleName || 'Role' }})</span>
-            <button @click="handleLogoutClick" class="btn btn-logout-mobile">Logout</button>
-          </li>
-        </ul>
-      </nav>
-
-      <!-- Bagian Aksi Kanan -->
-      <div class="nav-actions">
-        <!-- Tombol Login Desktop (Jika belum login) -->
-        <button v-if="!isLoggedIn" class="btn btn-secondary login-btn-desktop" @click="triggerLogin">
-          Login
-        </button>
-        <!-- Info User & Logout Desktop (Jika sudah login) -->
-        <div v-else class="user-info-desktop">
-          <span class="user-greeting">Halo, {{ userName || 'User' }}</span>
-          <span class="user-role">({{ roleName || 'Role' }})</span>
-          <button @click="handleLogoutClick" class="btn btn-logout-desktop" title="Logout">
-             <!-- Pastikan Font Awesome tersedia atau ganti ikon -->
-            <i class="fas fa-sign-out-alt"></i>
-          </button>
-        </div>
-
-        <!-- Tombol Burger Menu -->
-        <button class="mobile-menu-toggle" @click="toggleMobileMenu" aria-label="Toggle Menu" :class="{ 'active': mobileMenuOpen }">
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-        </button>
-      </div>
-    </div>
-  </header>
-</template>
-
 <script setup>
-// Import necessary functions from Vue and Vue Router
-import { ref, onMounted, onUnmounted, nextTick } from 'vue';
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'; // computed is still needed
 import { useRouter, useRoute } from 'vue-router';
 
 // Get router and route instances
 const router = useRouter();
 const route = useRoute();
 
-// Define props received from parent component
-defineProps({
-  isLoggedIn: { type: Boolean, default: false },
-  userName: { type: String, default: '' },
-  roleName: { type: String, default: '' }
+// --- Define Props ---
+// These props will receive the state values from App.vue
+const props = defineProps({
+  isLoggedIn: { type: Boolean, default: false }, // Corresponds to isUserLoggedIn in App.vue
+  userName: { type: String, default: '' },      // Corresponds to loggedInUserName in App.vue
+  roleName: { type: String, default: '' }       // Corresponds to loggedInUserRole in App.vue
 });
 
-// Define events emitted to parent component
+// Define emits (for login/logout button clicks)
 const emit = defineEmits(['login-click', 'logout-click']);
 
-// Reactive variables for component state
+// --- State variables for Navbar appearance ---
 const isScrolled = ref(false);
 const mobileMenuOpen = ref(false);
-const isMasterDropdownOpen = ref(false); // State for Master dropdown
+const isMasterDropdownOpen = ref(false);
+// REMOVED: const userRoleFromStorage = ref(null); // No longer needed, use props.roleName
 
-// --- Event Handlers ---
+// --- Computed property to check role based on the roleName prop ---
+const canViewUserManagement = computed(() => {
+  // 1. Check if logged in (using the prop)
+  if (!props.isLoggedIn) {
+    return false;
+  }
+  // 2. Get the role from the prop
+  const roleFromProp = props.roleName;
 
-// Handle window scroll to add/remove 'scrolled' class
+  // 3. Check if the role exists, trim whitespace, convert to lowercase, and compare
+  if (roleFromProp) {
+    // .trim() removes leading/trailing whitespace
+    // .toLowerCase() handles 'administrator' or 'Administrator' etc.
+    return roleFromProp.trim().toLowerCase() === 'administrator';
+  }
+
+  // 4. If no role provided via prop (or it's empty), return false
+  return false;
+});
+// --- END COMPUTED PROPERTY ---
+
+// Handle window scroll
 const handleScroll = () => {
   isScrolled.value = window.scrollY > 50;
 };
 
-// Toggle mobile menu visibility
+// Toggle mobile menu
 const toggleMobileMenu = () => {
   mobileMenuOpen.value = !mobileMenuOpen.value;
-  // Close dropdown when closing mobile menu
   if (!mobileMenuOpen.value) {
     isMasterDropdownOpen.value = false;
   }
 };
 
-// Close mobile menu (used when clicking non-dropdown links or logo)
+// Close mobile menu
 const closeMobileMenu = () => {
   mobileMenuOpen.value = false;
-  isMasterDropdownOpen.value = false; // Also close dropdown
+  isMasterDropdownOpen.value = false;
 };
 
-// Toggle Master dropdown visibility
+// Toggle Master dropdown
 const toggleMasterDropdown = () => {
   isMasterDropdownOpen.value = !isMasterDropdownOpen.value;
 };
 
-// Close mobile menu AND Master dropdown (used for dropdown links)
+// Close mobile menu AND Master dropdown
 const closeMobileMenuAndDropdown = () => {
   mobileMenuOpen.value = false;
   isMasterDropdownOpen.value = false;
 };
 
-// Emit login event and close mobile menu
+// Emit login event (to trigger modal in App.vue)
 const triggerLogin = () => {
   emit('login-click');
-  closeMobileMenu(); // Will also close dropdown if open
+  closeMobileMenu();
 };
 
-// Emit logout event and close mobile menu
+// Emit logout event (to trigger handleLogout in App.vue)
 const handleLogoutClick = () => {
+  // No need to clear localStorage here, App.vue handles it
   emit('logout-click');
-  closeMobileMenu(); // Will also close dropdown if open
+  closeMobileMenu();
 };
 
-// Handle clicks on scroll links (Home, Produk, etc.)
+// Handle scroll-to-section links (no changes needed here)
 const handleScrollToSection = (selector) => {
-  closeMobileMenu(); // Will also close dropdown if open
-  // If currently not on the home page, navigate there first
+  closeMobileMenu();
   if (route.name !== 'home') {
     router.push({ name: 'home' }).then(() => {
-      // Wait for DOM update after navigation, then scroll
       nextTick(() => {
         const element = document.querySelector(selector);
         if (element) {
@@ -166,7 +102,6 @@ const handleScrollToSection = (selector) => {
       });
     });
   } else {
-    // If already on the home page, scroll directly
     const element = document.querySelector(selector);
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' });
@@ -177,35 +112,100 @@ const handleScrollToSection = (selector) => {
 };
 
 // --- Lifecycle Hooks ---
-
-// Add scroll listener when component mounts
 onMounted(() => {
   window.addEventListener('scroll', handleScroll);
-  // Optional: Add click outside listener for desktop dropdown closing
-  // document.addEventListener('click', handleClickOutside);
+  // REMOVED: Logic to read localStorage here. App.vue handles the source data.
 });
 
-// Remove scroll listener when component unmounts
 onUnmounted(() => {
   window.removeEventListener('scroll', handleScroll);
-  // Optional: Remove click outside listener
-  // document.removeEventListener('click', handleClickOutside);
 });
 
-/*
-// Optional: Click outside handler (needs refinement based on exact DOM structure/refs)
-const handleClickOutside = (event) => {
-  // You might need to use refs on the dropdown toggle and menu
-  // for a more robust implementation
-  const dropdownElement = event.target.closest('.nav-item.dropdown');
-  if (isMasterDropdownOpen.value && !dropdownElement) {
-     isMasterDropdownOpen.value = false;
-  }
-};
-*/
 </script>
 
+<template>
+  <!-- The <template> section remains exactly the same. It already uses -->
+  <!-- props.isLoggedIn, props.userName, props.roleName and the -->
+  <!-- computed property canViewUserManagement correctly. -->
+
+  <header class="navbar" :class="{ 'scrolled': isScrolled, 'mobile-open': mobileMenuOpen }">
+    <div class="container nav-container">
+      <router-link :to="{ name: 'home' }" class="logo" @click="closeMobileMenu">
+        <img src="/logo.png" alt="Logo GarmenKeren" class="logo-img" />
+        <span class="logo-text">GarmenKeren</span>
+      </router-link>
+
+      <!-- Navigasi Utama (Jika belum login) -->
+      <!-- Uses props.isLoggedIn -->
+      <nav v-if="!isLoggedIn" class="nav-menu" :class="{ 'active': mobileMenuOpen }">
+        <ul class="nav-links">
+          <li><a href="#hero" @click="handleScrollToSection('#hero')">Home</a></li>
+          <li><a href="#featured" @click="handleScrollToSection('#featured')">Produk</a></li>
+          <li><a href="#brand" @click="handleScrollToSection('#brand')">Merek</a></li>
+          <li><a href="#cta" @click="handleScrollToSection('#cta')">Kontak</a></li>
+          <li class="nav-login-mobile">
+            <button class="btn btn-secondary login-btn-mobile" @click="triggerLogin">Login</button>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Navigasi Setelah Login (Dengan Master Dropdown) -->
+      <!-- Uses props.isLoggedIn -->
+      <nav v-else class="nav-menu" :class="{ 'active': mobileMenuOpen }">
+        <ul class="nav-links">
+          <li><router-link :to="{ name: 'dashboard' }" @click="closeMobileMenu">Dashboard</router-link></li>
+
+          <!-- Master Dropdown -->
+          <li class="nav-item dropdown" :class="{ 'open': isMasterDropdownOpen }">
+            <a href="#" class="nav-link dropdown-toggle" @click.prevent="toggleMasterDropdown">
+              Master
+              <i class="fas fa-caret-down dropdown-caret"></i>
+            </a>
+            <ul class="dropdown-menu" :class="{ 'show': isMasterDropdownOpen }">
+              <!-- Conditionally render Users link based on computed property -->
+              <!-- which now uses props.roleName -->
+              <li v-if="canViewUserManagement">
+                <router-link :to="{ name: 'user-management' }" @click="closeMobileMenuAndDropdown">Users</router-link>
+              </li>
+              <li><router-link :to="{ name: 'role-management' }" @click="closeMobileMenuAndDropdown">Roles</router-link></li>
+              <li><router-link :to="{ name: 'product-management' }" @click="closeMobileMenuAndDropdown">Products</router-link></li>
+              <li><router-link :to="{ name: 'category-management' }" @click="closeMobileMenuAndDropdown">Categories</router-link></li>
+            </ul>
+          </li>
+          <!-- Uses props.userName and props.roleName -->
+          <li class="nav-user-mobile">
+            <span>Halo, {{ userName || 'User' }} ({{ roleName || 'Role' }})</span>
+            <button @click="handleLogoutClick" class="btn btn-logout-mobile">Logout</button>
+          </li>
+        </ul>
+      </nav>
+
+      <!-- Bagian Aksi Kanan -->
+      <div class="nav-actions">
+        <!-- Uses props.isLoggedIn -->
+        <button v-if="!isLoggedIn" class="btn btn-secondary login-btn-desktop" @click="triggerLogin">
+          Login
+        </button>
+        <!-- Uses props.isLoggedIn, props.userName, props.roleName -->
+        <div v-else class="user-info-desktop">
+          <span class="user-greeting">Halo, {{ userName || 'User' }}</span>
+          <span class="user-role">({{ roleName || 'Role' }})</span>
+          <button @click="handleLogoutClick" class="btn btn-logout-desktop" title="Logout">
+            <i class="fas fa-sign-out-alt"></i>
+          </button>
+        </div>
+        <button class="mobile-menu-toggle" @click="toggleMobileMenu" aria-label="Toggle Menu" :class="{ 'active': mobileMenuOpen }">
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+      </div>
+    </div>
+  </header>
+</template>
+
 <style scoped>
+/* Styles remain exactly the same */
 /* --- Base Variables (Optional but recommended) --- */
 :root {
   --primary-color: #0d6efd; /* Bootstrap Primary Blue */
@@ -668,6 +668,12 @@ const handleClickOutside = (event) => {
    .dropdown-menu li:last-child {
        border-bottom: none;
    }
+   /* Fix border if Users is hidden and Roles becomes last */
+    .dropdown-menu li:has(a[href*="role-management"]):last-child {
+       border-bottom: none;
+    }
+
+
   .dropdown-menu li a,
   .dropdown-menu li > .router-link {
       padding: 15px 20px; /* Adjust padding */
@@ -700,9 +706,11 @@ const handleClickOutside = (event) => {
   /* Make last REAL item have no border */
   .nav-links li:has(+ .nav-login-mobile),
   .nav-links li:has(+ .nav-user-mobile),
-  .nav-links li.dropdown:has(+ .nav-user-mobile) { /* Check if dropdown is last before user */
+  .nav-links li.dropdown:has(+ .nav-user-mobile) {
       border-bottom: none;
   }
+
+
   .login-btn-mobile {
     display: inline-block; /* Allow centering */
     width: auto; /* Let button size naturally or set specific width */
@@ -754,4 +762,5 @@ const handleClickOutside = (event) => {
     display: none; /* Hide desktop user info */
   }
 }
+
 </style>

@@ -2,9 +2,6 @@
 import { ref } from 'vue';
 import axios from 'axios';
 import { useRouter } from 'vue-router';
-
-// Emit untuk menangani status login
-// eslint-disable-next-line no-undef
 const emit = defineEmits(['close-modal', 'login-error', 'login-success']);
 
 const email = ref('');
@@ -21,74 +18,55 @@ const handleLogin = async () => {
       password: password.value,
     }, { headers: { 'Accept': 'application/json' } });
 
-    // Validate the expected structure more thoroughly
     if (response.data && response.data.message === "Login successful" && response.data.data && response.data.data.token) {
-      console.log('Login Berhasil! Response data:', response.data.data); // Log the received data
+      console.log('Login Berhasil! Response data:', response.data.data);
 
-      // --- Corrected Saving Logic ---
-      const token = response.data.data.token;         // Get the token specifically
-      const fullUserData = response.data.data;       // Get the entire 'data' object
+      const token = response.data.data.token; 
+      const fullUserData = response.data.data; 
 
-      // 1. Save the token separately (as before)
       localStorage.setItem('authToken', token);
-      console.log('authToken saved:', localStorage.getItem('authToken')); // Verify in console
+      console.log('authToken saved:', localStorage.getItem('authToken'));
 
-      // 2. Save the ENTIRE data object (including the token) as userData
       localStorage.setItem('userData', JSON.stringify(fullUserData));
-      console.log('userData saved:', localStorage.getItem('userData')); // Verify in console
-      // --- End Corrected Saving Logic ---
+      console.log('userData saved:', localStorage.getItem('userData'));
 
-      // Emit the full user data object to the parent
       emit('login-success', fullUserData);
 
-      // Close the modal
       emit('close-modal');
 
-      // Redirect after a short delay (allows emits/state updates)
-      // Consider using nextTick if the delay feels unreliable
       setTimeout(() => {
         router.push('/dashboard');
         console.log('Redirecting to dashboard...');
       }, 300);
 
     } else {
-      // Handle cases where the API says success but the data structure is wrong
       const errorMessage = response.data?.message || 'Login berhasil, tetapi data tidak lengkap dari server.';
       console.error('Login response format unexpected:', response.data);
       emit('login-error', errorMessage);
     }
   } catch (err) {
-    console.error("Login API error:", err); // Log the full error object
+    console.error("Login API error:", err);
     let errorMessage = 'Terjadi kesalahan saat login.';
     if (err.response && err.response.data && err.response.data.message) {
-      // Use server's error message if available
       errorMessage = err.response.data.message;
     } else if (err.response && err.response.status === 401) {
       errorMessage = 'Email atau password salah.';
     } else if (err.request) {
-      // Network error
       errorMessage = 'Tidak dapat terhubung ke server. Periksa koneksi Anda.';
     } else {
-      // Other errors (e.g., code errors before request)
        errorMessage = err.message || 'Terjadi kesalahan tidak terduga.';
     }
-    // Emit the error message
     emit('login-error', errorMessage);
   } finally {
     isLoading.value = false;
   }
 };
 
-// Assuming this function exists if used in the template
 const togglePasswordVisibility = () => { showPassword.value = !showPassword.value; };
-
-// Make sure to replace the placeholder comments for emit/props/refs
-// if this code is not within a <script setup> block.
 </script>
 
 
 <template>
-  <!-- ... (template Anda tetap sama) ... -->
   <div class="login-card" @click.stop>
     <button @click="$emit('close-modal')" class="close-btn" aria-label="Tutup Login">×</button>
     <h2 class="login-title">Login ke Akun Anda</h2>
@@ -127,7 +105,6 @@ const togglePasswordVisibility = () => { showPassword.value = !showPassword.valu
 </template>
 
 <style scoped>
-  /* ... (style Anda tetap sama) ... */
   .login-card {
     background-color: var(--white);
     padding: 35px 30px;
@@ -306,26 +283,25 @@ const togglePasswordVisibility = () => { showPassword.value = !showPassword.valu
     box-shadow: 0 4px 15px rgba(37, 117, 252, 0.3);
     position: relative;
     overflow: hidden;
-    min-height: 50px; /* Ensure consistent height */
+    min-height: 50px;
   }
 
     .btn-login:disabled {
-        /* Adjust disabled styles */
-        background: #ccc; /* Change gradient to gray */
+        background: #ccc;
         box-shadow: none;
         cursor: not-allowed;
         opacity: 0.6;
     }
 
   .spinner {
-    display: inline-block; /* Make spinner behave like text */
-    width: 20px; /* Smaller spinner */
+    display: inline-block;
+    width: 20px;
     height: 20px;
-    border: 3px solid rgba(255, 255, 255, 0.3); /* Lighter border */
-    border-top-color: var(--white); /* White spinner top */
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: var(--white);
     border-radius: 50%;
     animation: spin 1s linear infinite;
-    vertical-align: middle; /* Align with text */
+    vertical-align: middle;
   }
 
   @keyframes spin {
@@ -353,11 +329,10 @@ const togglePasswordVisibility = () => { showPassword.value = !showPassword.valu
     color: var(--secondary-color);
   }
 
-  /* Optional: Style for login error message */
   .login-error-message {
-      color: var(--error-color); /* Use your error color variable */
+      color: var(--error-color);
       font-size: 0.85rem;
-      margin-top: -10px; /* Adjust spacing */
+      margin-top: -10px;
       margin-bottom: 15px;
       text-align: left;
   }

@@ -3,30 +3,26 @@
     <div class="container footer-container">
       <div class="footer-about">
         <a href="#" class="footer-logo">
-          <!-- Ganti alt text dan nama brand -->
           <img src="/logo.png" alt="Logo GarmenKeren" class="footer-logo-img">
-          <span>GarmenKeren</span> <!-- Ganti Nama Brand -->
+          <span>GarmenKeren</span>
         </a>
-        <!-- Deskripsi diperbarui -->
         <p>Menyediakan produk rumah tangga berkualitas untuk membantu Anda menciptakan rumah yang nyaman dan fungsional.</p>
         <div class="social-links">
-          <!-- Pastikan link sosial media benar -->
           <a href="#" aria-label="Instagram"><i class="fab fa-instagram"></i></a>
           <a href="#" aria-label="Facebook"><i class="fab fa-facebook-f"></i></a>
-          <a href="#" aria-label="Pinterest"><i class="fab fa-pinterest"></i></a> <!-- Contoh: Ganti Twitter dengan Pinterest -->
-          <a href="#" aria-label="Whatsapp"><i class="fab fa-whatsapp"></i></a>   <!-- Contoh: Ganti Tiktok dengan Whatsapp -->
+          <a href="#" aria-label="Pinterest"><i class="fab fa-pinterest"></i></a>
+          <a href="#" aria-label="Whatsapp"><i class="fab fa-whatsapp"></i></a>
         </div>
       </div>
 
       <div class="footer-links">
         <h4>Tautan Cepat</h4>
         <ul>
-          <!-- Tautan diperbarui -->
           <li><a href="#featured">Produk Terbaru</a></li>
           <li><a href="#brand">Tentang Kami</a></li>
           <li><a href="#">FAQ</a></li>
           <li><a href="#">Kontak</a></li>
-          <li><a href="#">Blog/Tips</a></li> <!-- Contoh: Ganti Karir -->
+          <li><a href="#">Blog/Tips</a></li>
         </ul>
       </div>
 
@@ -35,8 +31,7 @@
         <ul>
           <li><a href="#">Cara Pemesanan</a></li>
           <li><a href="#">Kebijakan Pengembalian</a></li>
-          <!-- Tautan diperbarui -->
-          <li><a href="#">Panduan Perawatan Produk</a></li> <!-- Ganti Ukuran Pakaian -->
+          <li><a href="#">Panduan Perawatan Produk</a></li>
           <li><a href="#">Syarat & Ketentuan</a></li>
           <li><a href="#">Kebijakan Privasi</a></li>
         </ul>
@@ -44,7 +39,6 @@
 
       <div class="footer-subscribe">
          <h4>Tetap Terhubung</h4>
-         <!-- Teks diperbarui -->
          <p>Dapatkan info promo & produk baru langsung ke emailmu.</p>
          <form @submit.prevent class="footer-newsletter">
              <input type="email" placeholder="Email kamu...">
@@ -54,19 +48,12 @@
 
     </div>
     <div class="footer-bottom">
-      <!-- Copyright diperbarui -->
-      <p>© {{ new Date().getFullYear() }} GarmenKeren. All Rights Reserved.</p> <!-- Ganti Nama Brand -->
+      <p>© {{ new Date().getFullYear() }} GarmenKeren. All Rights Reserved.</p>
     </div>
   </footer>
 </template>
 
-<script setup>
-// Script setup tidak perlu diubah
-// Pastikan Font Awesome tersedia jika ingin menggunakan ikon
-</script>
-
 <style scoped>
-/* --- Style Footer (umumnya bisa tetap sama) --- */
 .site-footer {
   background-color: #222;
   color: #ccc;
@@ -109,7 +96,7 @@
     transition: color 0.3s ease;
 }
 .social-links a:last-child {
-    margin-right: 0; /* Hapus margin kanan pada ikon terakhir */
+    margin-right: 0;
 }
 .social-links a:hover {
     color: var(--accent-color);
@@ -165,7 +152,7 @@
     background-color: #333;
     border-radius: 5px;
     overflow: hidden;
-    max-width: 300px; /* Batasi lebar form jika perlu */
+    max-width: 300px;
 }
 .footer-newsletter input {
     flex-grow: 1;
@@ -187,7 +174,7 @@
     transition: background-color 0.3s ease;
 }
 .footer-newsletter button:hover {
-    background: #ff8a8a; /* Contoh warna hover */
+    background: #ff8a8a;
 }
 
 .footer-bottom {
@@ -227,7 +214,7 @@
            padding-left: 0;
        }
        .footer-newsletter {
-           margin-left: auto; /* Pusatkan form di mobile */
+           margin-left: auto;
            margin-right: auto;
        }
 }

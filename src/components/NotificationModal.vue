@@ -1,13 +1,11 @@
 <script setup>
 import { ref } from 'vue';
 
-// Propertis untuk menampilkan notifikasi
 const props = defineProps({
   message: String,
   type: String
 });
 
-// Status visibility modal
 const showModal = ref(true);
 
 const closeModal = () => {

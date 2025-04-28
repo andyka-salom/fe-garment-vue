@@ -1,5 +1,4 @@
 <template>
-  <!-- Tambahkan style binding untuk background image -->
   <section
     id="hero"
     class="hero"
@@ -17,25 +16,13 @@
   </section>
 </template>
 
-<script setup>
-// import { onMounted } from 'vue'; // Hanya jika Anda benar-benar membutuhkannya
-// import AOS from 'aos'; // Jika pakai AOS
-// import 'aos/dist/aos.css'; // Jika pakai AOS
-
-// onMounted(() => {
-//     console.log("Hero mounted");
-//     // AOS.init({ duration: 800, once: true }); // Jika pakai AOS
-// });
-</script>
 
 <style scoped>
 .hero {
   position: relative;
   height: 100vh;
   min-height: 600px;
-  /* Hapus background dari CSS */
-  /* background: url('/hero-bg.jpg') no-repeat center center/cover; */
-  background-repeat: no-repeat; /* Tambahkan properti background lain jika perlu */
+  background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
   display: flex;
@@ -45,7 +32,6 @@
   color: var(--white);
 }
 
-/* --- Style Hero lainnya (tetap sama seperti sebelumnya) --- */
 .hero-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.7)); z-index: 1; }
 .hero-content { position: relative; z-index: 2; max-width: 800px; }
 .hero-title { font-size: 4rem; font-weight: 700; margin-bottom: 1.5rem; line-height: 1.2; text-shadow: 2px 2px 8px rgba(0,0,0,0.5); }
