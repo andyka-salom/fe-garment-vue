@@ -1,133 +1,79 @@
+// src/components/Navbar.vue (or wherever your Navbar is)
+
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue'; // computed is still needed
+// ... (keep existing script setup content) ...
+import { ref, onMounted, onUnmounted, nextTick, computed } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 
-// Get router and route instances
 const router = useRouter();
 const route = useRoute();
 
-// --- Define Props ---
-// These props will receive the state values from App.vue
 const props = defineProps({
-  isLoggedIn: { type: Boolean, default: false }, // Corresponds to isUserLoggedIn in App.vue
-  userName: { type: String, default: '' },      // Corresponds to loggedInUserName in App.vue
-  roleName: { type: String, default: '' }       // Corresponds to loggedInUserRole in App.vue
+  isLoggedIn: { type: Boolean, default: false },
+  userName: { type: String, default: '' },
+  roleName: { type: String, default: '' }
 });
 
-// Define emits (for login/logout button clicks)
 const emit = defineEmits(['login-click', 'logout-click']);
 
-// --- State variables for Navbar appearance ---
 const isScrolled = ref(false);
 const mobileMenuOpen = ref(false);
 const isMasterDropdownOpen = ref(false);
-// REMOVED: const userRoleFromStorage = ref(null); // No longer needed, use props.roleName
 
-// --- Computed property to check role based on the roleName prop ---
 const canViewUserManagement = computed(() => {
-  // 1. Check if logged in (using the prop)
-  if (!props.isLoggedIn) {
-    return false;
-  }
-  // 2. Get the role from the prop
+  if (!props.isLoggedIn) return false;
   const roleFromProp = props.roleName;
-
-  // 3. Check if the role exists, trim whitespace, convert to lowercase, and compare
   if (roleFromProp) {
-    // .trim() removes leading/trailing whitespace
-    // .toLowerCase() handles 'administrator' or 'Administrator' etc.
     return roleFromProp.trim().toLowerCase() === 'administrator';
   }
+  return false;
+});
 
-  // 4. If no role provided via prop (or it's empty), return false
+// --- Add computed property for Production Orders (Example: Allow more roles) ---
+// Decide which roles can see this. Here, Admin or 'Operator' (adjust as needed)
+const canViewProductionOrders = computed(() => {
+  if (!props.isLoggedIn) return false;
+  const roleFromProp = props.roleName;
+  if (roleFromProp) {
+    const lowerRole = roleFromProp.trim().toLowerCase();
+    return lowerRole === 'administrator' || lowerRole === 'operator'; // Example roles
+  }
   return false;
 });
 // --- END COMPUTED PROPERTY ---
 
-// Handle window scroll
-const handleScroll = () => {
-  isScrolled.value = window.scrollY > 50;
-};
 
-// Toggle mobile menu
-const toggleMobileMenu = () => {
-  mobileMenuOpen.value = !mobileMenuOpen.value;
-  if (!mobileMenuOpen.value) {
-    isMasterDropdownOpen.value = false;
-  }
-};
+const handleScroll = () => { isScrolled.value = window.scrollY > 50; };
+const toggleMobileMenu = () => { mobileMenuOpen.value = !mobileMenuOpen.value; if (!mobileMenuOpen.value) isMasterDropdownOpen.value = false; };
+const closeMobileMenu = () => { mobileMenuOpen.value = false; isMasterDropdownOpen.value = false; };
+const toggleMasterDropdown = () => { isMasterDropdownOpen.value = !isMasterDropdownOpen.value; };
+const closeMobileMenuAndDropdown = () => { mobileMenuOpen.value = false; isMasterDropdownOpen.value = false; };
+const triggerLogin = () => { emit('login-click'); closeMobileMenu(); };
+const handleLogoutClick = () => { emit('logout-click'); closeMobileMenu(); };
 
-// Close mobile menu
-const closeMobileMenu = () => {
-  mobileMenuOpen.value = false;
-  isMasterDropdownOpen.value = false;
-};
-
-// Toggle Master dropdown
-const toggleMasterDropdown = () => {
-  isMasterDropdownOpen.value = !isMasterDropdownOpen.value;
-};
-
-// Close mobile menu AND Master dropdown
-const closeMobileMenuAndDropdown = () => {
-  mobileMenuOpen.value = false;
-  isMasterDropdownOpen.value = false;
-};
-
-// Emit login event (to trigger modal in App.vue)
-const triggerLogin = () => {
-  emit('login-click');
-  closeMobileMenu();
-};
-
-// Emit logout event (to trigger handleLogout in App.vue)
-const handleLogoutClick = () => {
-  // No need to clear localStorage here, App.vue handles it
-  emit('logout-click');
-  closeMobileMenu();
-};
-
-// Handle scroll-to-section links (no changes needed here)
 const handleScrollToSection = (selector) => {
   closeMobileMenu();
   if (route.name !== 'home') {
     router.push({ name: 'home' }).then(() => {
       nextTick(() => {
         const element = document.querySelector(selector);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth' });
-        } else {
-          console.warn(`Element with selector "${selector}" not found on home page.`);
-        }
+        if (element) element.scrollIntoView({ behavior: 'smooth' });
+        else console.warn(`Element with selector "${selector}" not found on home page.`);
       });
     });
   } else {
     const element = document.querySelector(selector);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    } else {
-       console.warn(`Element with selector "${selector}" not found.`);
-    }
+    if (element) element.scrollIntoView({ behavior: 'smooth' });
+    else console.warn(`Element with selector "${selector}" not found.`);
   }
 };
 
-// --- Lifecycle Hooks ---
-onMounted(() => {
-  window.addEventListener('scroll', handleScroll);
-  // REMOVED: Logic to read localStorage here. App.vue handles the source data.
-});
-
-onUnmounted(() => {
-  window.removeEventListener('scroll', handleScroll);
-});
+onMounted(() => { window.addEventListener('scroll', handleScroll); });
+onUnmounted(() => { window.removeEventListener('scroll', handleScroll); });
 
 </script>
 
 <template>
-  <!-- The <template> section remains exactly the same. It already uses -->
-  <!-- props.isLoggedIn, props.userName, props.roleName and the -->
-  <!-- computed property canViewUserManagement correctly. -->
-
   <header class="navbar" :class="{ 'scrolled': isScrolled, 'mobile-open': mobileMenuOpen }">
     <div class="container nav-container">
       <router-link :to="{ name: 'home' }" class="logo" @click="closeMobileMenu">
@@ -136,9 +82,9 @@ onUnmounted(() => {
       </router-link>
 
       <!-- Navigasi Utama (Jika belum login) -->
-      <!-- Uses props.isLoggedIn -->
-      <nav v-if="!isLoggedIn" class="nav-menu" :class="{ 'active': mobileMenuOpen }">
-        <ul class="nav-links">
+      <nav v-if="!props.isLoggedIn" class="nav-menu" :class="{ 'active': mobileMenuOpen }">
+         <!-- ... (unchanged) ... -->
+         <ul class="nav-links">
           <li><a href="#hero" @click="handleScrollToSection('#hero')">Home</a></li>
           <li><a href="#featured" @click="handleScrollToSection('#featured')">Produk</a></li>
           <li><a href="#brand" @click="handleScrollToSection('#brand')">Merek</a></li>
@@ -150,7 +96,6 @@ onUnmounted(() => {
       </nav>
 
       <!-- Navigasi Setelah Login (Dengan Master Dropdown) -->
-      <!-- Uses props.isLoggedIn -->
       <nav v-else class="nav-menu" :class="{ 'active': mobileMenuOpen }">
         <ul class="nav-links">
           <li><router-link :to="{ name: 'dashboard' }" @click="closeMobileMenu">Dashboard</router-link></li>
@@ -162,19 +107,30 @@ onUnmounted(() => {
               <i class="fas fa-caret-down dropdown-caret"></i>
             </a>
             <ul class="dropdown-menu" :class="{ 'show': isMasterDropdownOpen }">
-              <!-- Conditionally render Users link based on computed property -->
-              <!-- which now uses props.roleName -->
+              <!-- Users (Conditional) -->
               <li v-if="canViewUserManagement">
                 <router-link :to="{ name: 'user-management' }" @click="closeMobileMenuAndDropdown">Users</router-link>
               </li>
+              <!-- Roles -->
               <li><router-link :to="{ name: 'role-management' }" @click="closeMobileMenuAndDropdown">Roles</router-link></li>
+              <!-- Products -->
               <li><router-link :to="{ name: 'product-management' }" @click="closeMobileMenuAndDropdown">Products</router-link></li>
+               <!-- Categories -->
               <li><router-link :to="{ name: 'category-management' }" @click="closeMobileMenuAndDropdown">Categories</router-link></li>
+
+          <!-- Production Orders (Conditional based on canViewProductionOrders) -->
+          <li v-if="canViewProductionOrders">
+            <router-link :to="{ name: 'production-order-management' }" @click="closeMobileMenuAndDropdown">
+              Production Orders
+            </router-link>
+          </li>
+          <!-- End Production Orders -->
+
             </ul>
           </li>
-          <!-- Uses props.userName and props.roleName -->
+           <!-- Mobile User Info -->
           <li class="nav-user-mobile">
-            <span>Halo, {{ userName || 'User' }} ({{ roleName || 'Role' }})</span>
+            <span>Halo, {{ props.userName || 'User' }} ({{ props.roleName || 'Role' }})</span>
             <button @click="handleLogoutClick" class="btn btn-logout-mobile">Logout</button>
           </li>
         </ul>
@@ -182,14 +138,13 @@ onUnmounted(() => {
 
       <!-- Bagian Aksi Kanan -->
       <div class="nav-actions">
-        <!-- Uses props.isLoggedIn -->
-        <button v-if="!isLoggedIn" class="btn btn-secondary login-btn-desktop" @click="triggerLogin">
+         <!-- ... (unchanged login/logout buttons and burger) ... -->
+        <button v-if="!props.isLoggedIn" class="btn btn-secondary login-btn-desktop" @click="triggerLogin">
           Login
         </button>
-        <!-- Uses props.isLoggedIn, props.userName, props.roleName -->
         <div v-else class="user-info-desktop">
-          <span class="user-greeting">Halo, {{ userName || 'User' }}</span>
-          <span class="user-role">({{ roleName || 'Role' }})</span>
+          <span class="user-greeting">Halo, {{ props.userName || 'User' }}</span>
+          <span class="user-role">({{ props.roleName || 'Role' }})</span>
           <button @click="handleLogoutClick" class="btn btn-logout-desktop" title="Logout">
             <i class="fas fa-sign-out-alt"></i>
           </button>
@@ -205,7 +160,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* Styles remain exactly the same */
+/* --- Keep the existing styles --- */
 /* --- Base Variables (Optional but recommended) --- */
 :root {
   --primary-color: #0d6efd; /* Bootstrap Primary Blue */
@@ -672,6 +627,10 @@ onUnmounted(() => {
     .dropdown-menu li:has(a[href*="role-management"]):last-child {
        border-bottom: none;
     }
+   /* Fix border if last conditional item (Prod Orders) is visible */
+    .dropdown-menu li:has(a[href*="production-orders"]):last-child {
+        border-bottom: none;
+    }
 
 
   .dropdown-menu li a,
@@ -762,5 +721,4 @@ onUnmounted(() => {
     display: none; /* Hide desktop user info */
   }
 }
-
 </style>
