@@ -1,4 +1,6 @@
 <template>
+  <div class="dashboard-view">
+    <div class="container">
     <div class="category-manager-container">
       <header class="page-header">
         <h1 class="page-title">Manajemen Kategori</h1>
@@ -190,6 +192,8 @@
            </div>
          </div>
        </div>
+       </div>
+       </div>
   
     </div>
   </template>
@@ -200,7 +204,7 @@
   
   // --- Axios Instance & Interceptors ---
   const apiClient = axios.create({
-    baseURL: 'http://back-end.test/api', // --- SESUAIKAN ---
+    baseURL:  `${process.env.VUE_APP_API_URL}`, // --- SESUAIKAN ---
     headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
   });
   apiClient.interceptors.request.use(config => {

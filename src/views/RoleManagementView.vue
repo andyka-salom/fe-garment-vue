@@ -1,4 +1,6 @@
 <template>
+  <div class="dashboard-view">
+    <div class="container">
   <div class="role-manager-container">
     <header class="page-header">
       <h1 class="page-title">Manajemen Role</h1>
@@ -101,7 +103,8 @@
         </div>
       </div>
     </div>
-
+</div>
+       </div>
   </div>
 </template>
 
@@ -112,7 +115,7 @@ import axios from 'axios';
 
 // --- Konfigurasi Axios Instance ---
 const apiClient = axios.create({
-  baseURL: 'http://back-end.test/api', // --- SESUAIKAN BASE URL API ANDA ---
+  baseURL: `${process.env.VUE_APP_API_URL}`, // --- SESUAIKAN BASE URL API ANDA ---
   headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
 });
 

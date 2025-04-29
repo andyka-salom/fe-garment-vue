@@ -1,4 +1,6 @@
 <template>
+  <div class="dashboard-view">
+    <div class="container">
   <div class="user-manager-container">
     <header class="page-header">
       <h1 class="page-title">Manajemen Pengguna</h1>
@@ -217,6 +219,8 @@
         </div>
     </div>
 
+  </div>    </div>
+
   </div>
 </template>
 
@@ -229,7 +233,7 @@ import { nextTick } from 'vue';
 
 // --- Konfigurasi Axios Instance (Sama seperti sebelumnya) ---
 const apiClient = axios.create({
-    baseURL: 'http://back-end.test/api', // --- SESUAIKAN BASE URL API ANDA ---
+    baseURL:  `${process.env.VUE_APP_API_URL}`, // --- SESUAIKAN BASE URL API ANDA ---
     headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
 });
 

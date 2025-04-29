@@ -1,4 +1,6 @@
 <template>
+  <div class="dashboard-view">
+    <div class="container">
   <div class="product-manager-container">
     <header class="page-header">
       <h1 class="page-title">Manajemen Produk</h1>
@@ -216,7 +218,8 @@
          </div>
        </div>
      </div>
-
+</div>
+       </div>
   </div>
 </template>
 
@@ -227,7 +230,7 @@ import { ref, onMounted, reactive } from 'vue';
 import axios from 'axios';
 
 const apiClient = axios.create({
-  baseURL: 'http://back-end.test/api', // --- SESUAIKAN BASE URL API ANDA ---
+  baseURL:  `${process.env.VUE_APP_API_URL}`, // --- SESUAIKAN BASE URL API ANDA ---
   headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
 });
 apiClient.interceptors.request.use(config => {
