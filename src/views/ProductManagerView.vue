@@ -467,50 +467,8 @@ responseType: 'blob'
 async function submitImport() { if (!importFile.value) { importError.value = 'Silakan pilih file untuk diimport.'; return; } isImporting.value = true; importError.value = null; importSuccess.value = null; error.value = null; successMessage.value = null; const formData = new FormData(); formData.append('file', importFile.value); try { const response = await apiClient.post('/products/import', formData); if (response.data && response.data.status === 'success') { importSuccess.value = response.data.message || 'Data berhasil diimport.'; setTimeout(() => { closeImportModal(); if (viewMode.value === 'active') { fetchProducts(); } else { fetchTrashCount(); } }, 2000); } else { throw new Error(response.data?.message || 'Import gagal, respons tidak sesuai format.'); } } catch (err) { console.error("Error submitting import:", err); importError.value = getErrorMessage(err, 'Terjadi kesalahan saat mengimport data.'); if (importFileRef.value) { importFileRef.value.value = ''; } importFile.value = null; } finally { isImporting.value = false; } }
 
 
-// --- Lifecycle Hook ---
 onMounted(() => {
 console.log("ProductManagerView Mounted");
 fetchProducts();
 });
-/* eslint-enable no-unused-vars */
 </script>
-
-
-<style scoped>
-/* Reuse styles from previous component, adjusting class names if necessary */
-.product-manager-view { padding: 1.5rem 0; }
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
-.page-title { font-size: 1.75rem; font-weight: 500; margin-bottom: 0; }
-.filter-section .card-body { padding: 1rem; }
-.filter-item { margin-bottom: 0; }
-.sortable-header { cursor: pointer; user-select: none; position: relative; padding-right: 1.5em; }
-.sortable-header i { position: absolute; right: 0.5em; top: 50%; transform: translateY(-50%); font-size: 0.9em; }
-.modern-table { border: 1px solid #dee2e6; font-size: 0.9rem; margin-bottom: 0; }
-.modern-table thead th { background-color: #f8f9fa; border-bottom-width: 2px; vertical-align: middle; white-space: nowrap; }
-.modern-table tbody td { vertical-align: middle; }
-.modern-table tbody tr:hover { background-color: #f1f1f1; }
-.table-container { border-radius: 0.375rem; overflow: hidden; border: 1px solid #dee2e6; }
-.action-buttons { display: flex; gap: 0.5rem; justify-content: center; }
-.btn-icon { padding: 0.3rem 0.6rem; font-size: 0.85rem; line-height: 1; }
-.badge.bg-success-light { background-color: #e6f7f0; border: 1px solid #c3e6cb; color: #155724 !important; }
-.badge.text-success { color: #0f5132 !important; }
-.badge.bg-secondary-light { background-color: #f8f9fa; border: 1px solid #e2e3e5; color: #41464b !important; }
-.badge.text-secondary { color: #495057 !important; }
-.modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 1050; overflow-y: auto; padding: 1rem; }
-.modal-dialog { width: 100%; }
-.modal-dialog:not(.modal-xl) { max-width: 500px; }
-.modal-dialog.modal-lg { max-width: 800px; }
-.modal-dialog.modal-xl { max-width: 1140px; }
-.pagination-controls { margin-top: 1.5rem; }
-.main-content-area { min-height: 200px; /* Prevent collapse during load */ }
-.audit-modal-body { max-height: 70vh; overflow-y: auto; }
-.audit-table { table-layout: fixed; word-wrap: break-word; font-size: 0.85rem; }
-.audit-changes div { margin-bottom: 3px; }
-.audit-event-created { background-color: var(--bs-success-bg-subtle); color: var(--bs-success-text-emphasis); }
-.audit-event-updated { background-color: var(--bs-warning-bg-subtle); color: var(--bs-warning-text-emphasis); }
-.audit-event-deleted { background-color: var(--bs-danger-bg-subtle); color: var(--bs-danger-text-emphasis); }
-.audit-event-restored { background-color: var(--bs-info-bg-subtle); color: var(--bs-info-text-emphasis); }
-pre.audit-json { white-space: pre-wrap; background-color: #f8f9fa; padding: 5px; border-radius: 3px; font-size: 0.9em; }
-/* Responsive */
-@media (max-width: 767px) { .page-header { flex-direction: column; align-items: flex-start; } .filter-section .card-body { flex-direction: column; align-items: stretch; } .filter-item { min-width: 0; margin-bottom: 0.75rem; } .filter-item:last-child { margin-bottom: 0; } .filter-item .input-group, .filter-item .form-select { width: 100%; } .filter-item .ms-md-auto { margin-left: 0 !important; margin-top: 0.5rem; display: flex; gap: 0.5rem; } .pagination-controls { flex-direction: column; align-items: center; } .pagination-controls > div:first-child { margin-bottom: 0.75rem; } }
-</style>
