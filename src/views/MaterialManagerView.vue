@@ -1,4 +1,6 @@
 <template>
+      <div class="dashboard-view">
+        <div class="container">
     <div class="material-manager-view"> <!-- Root element -->
         <div class="container"> <!-- Bootstrap container -->
             <div class="material-manager-container"> <!-- Specific container for this view -->
@@ -441,7 +443,8 @@
                         </div>
                     </div>
                 </div>
-
+            </div>
+        </div>
             </div>
         </div>
     </div>

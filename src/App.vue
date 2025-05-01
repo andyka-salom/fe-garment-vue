@@ -23,10 +23,10 @@
     <main class="main-content">
       <!-- PERBAIKAN: Ambil 'route' dari v-slot dan tambahkan :key -->
       <router-view v-slot="{ Component, route }">
-         <transition name="fade" mode="out-in">
+         <!-- <transition name="fade" mode="out-in"> -->
               <!-- Gunakan route.path atau route.fullPath sebagai kunci unik -->
               <component :is="Component" :key="route.path" />
-         </transition>
+         <!-- </transition> -->
       </router-view>
     </main>
 
@@ -127,31 +127,3 @@ onMounted(() => {
 });
 </script>
 
-<style>
-/* Global styles & transition styles (Sama seperti sebelumnya, pastikan ada) */
-#app-container {
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-}
-.main-content {
-  flex: 1;
-  padding-top: 60px; /* Sesuaikan jika navbar fixed */
-}
-.app-footer { flex-shrink: 0; }
-.fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-.fade-enter-from, .fade-leave-to { opacity: 0; }
-
-/* --- Gaya Notifikasi (Sama seperti sebelumnya) --- */
-.notification { position: fixed; top: 70px; right: 20px; padding: 1rem 1.5rem; border-radius: 0.375rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); z-index: 1100; display: flex; align-items: center; justify-content: space-between; min-width: 250px; max-width: 400px; border: 1px solid transparent; }
-.notification p { margin: 0; margin-right: 1rem; font-size: 0.9rem; }
-.notification--info { background-color: #EFF6FF; color: #1E40AF; border-color: #BFDBFE; }
-.notification--success { background-color: #ECFDF5; color: #047857; border-color: #A7F3D0; }
-.notification--error { background-color: #FEF2F2; color: #991B1B; border-color: #FECACA; }
-.notification--warning { background-color: #FFFBEB; color: #92400E; border-color: #FDE68A; }
-.close-notification-btn { background: none; border: none; font-size: 1.4rem; line-height: 1; cursor: pointer; color: inherit; opacity: 0.7; padding: 0 0 0 0.5rem; }
-.close-notification-btn:hover { opacity: 1; }
-
-/* --- Gaya Modal Backdrop (Sama seperti sebelumnya) --- */
-.modal-backdrop { position: fixed; inset: 0; background-color: rgba(17, 24, 39, 0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 1040; padding: 1rem; }
-</style>
