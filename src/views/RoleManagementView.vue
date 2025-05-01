@@ -1,405 +1,715 @@
 <template>
-  <div class="dashboard-view">
-    <div class="container">
-  <div class="role-manager-container">
-    <header class="page-header">
-      <h1 class="page-title">Manajemen Role</h1>
-      <button @click="openAddModal" class="btn btn-primary btn-lg">
-        <i class="fas fa-plus me-2"></i> Tambah Role Baru
-      </button>
-    </header>
+    <div class="dashboard-view">
+        <div class="container">
+            <div class="role-manager-container"> <!-- Renamed class -->
+                <header class="page-header">
+                    <h1 class="page-title">Manajemen Role</h1>
+                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                        <!-- View Toggle -->
+                        <div class="btn-group btn-group-sm" role="group" aria-label="View Mode Toggle">
+                            <button type="button" class="btn"
+                                :class="viewMode === 'active' ? 'btn-primary active' : 'btn-outline-secondary'"
+                                @click="switchViewMode('active')"
+                                :disabled="isLoading">
+                                <i class="fas fa-list me-1"></i> Daftar Aktif
+                            </button>
+                            <button type="button" class="btn"
+                                :class="viewMode === 'trashed' ? 'btn-primary active' : 'btn-outline-secondary'"
+                                @click="switchViewMode('trashed')"
+                                :disabled="isLoading">
+                                <i class="fas fa-trash me-1"></i> Tempat Sampah
+                                <span v-if="trashedCount > 0" class="badge bg-danger ms-1 rounded-pill">{{ trashedCountForDisplay }}</span>
+                            </button>
+                        </div>
+                        <!-- Add Button (only for active view) -->
+                        <button v-if="viewMode === 'active'" @click="openAddModal" class="btn btn-primary btn-sm">
+                            <i class="fas fa-plus me-1"></i> Tambah Role Baru
+                        </button>
+                    </div>
+                </header>
 
-    <!-- Feedback Section -->
-    <div class="feedback-section">
-      <div v-if="isLoading" class="alert alert-info d-flex align-items-center shadow-sm" role="alert">
-        <div class="spinner-border spinner-border-sm me-3" role="status" aria-hidden="true"></div>
-        <span>Memuat data role, mohon tunggu...</span>
-      </div>
-      <div v-if="error && !showModal" class="alert alert-danger shadow-sm" role="alert">
-        <i class="fas fa-exclamation-triangle me-2"></i> {{ error }}
-      </div>
-      <div v-if="!isLoading && roles.length === 0 && !error" class="alert alert-secondary text-center shadow-sm" role="alert">
-        <i class="fas fa-shield-alt me-2"></i> Belum ada data role. Silakan tambahkan role baru.
-      </div>
-    </div>
-
-    <!-- Tabel Roles -->
-    <div v-if="!isLoading && roles.length > 0" class="table-container shadow-sm">
-      <div class="table-responsive">
-        <table class="table table-hover align-middle modern-table">
-          <thead>
-            <tr>
-              <th scope="col" style="width: 5%;">#</th>
-              <th scope="col">Nama Role</th>
-              <th scope="col">Dibuat Pada</th>
-              <th scope="col">Diperbarui Pada</th>
-              <th scope="col" class="text-center">Aksi</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(role, index) in roles" :key="role.uuid">
-              <td>{{ index + 1 }}</td>
-              <td class="fw-medium">{{ role.name }}</td>
-              <td>{{ formatDate(role.created_at) }}</td>
-              <td>{{ formatDate(role.updated_at) }}</td>
-              <td>
-                <div class="action-buttons">
-                  <button @click="openEditModal(role)" class="btn btn-icon btn-outline-primary" title="Edit Role">
-                    <i class="fas fa-pencil-alt"></i>
-                  </button>
-                  <button @click="confirmDeleteRole(role.uuid, role.name)" class="btn btn-icon btn-outline-danger" title="Hapus Role">
-                      <i class="fas fa-trash-alt"></i>
-                  </button>
+                <!-- Filters Section -->
+                <div class="filter-section card shadow-sm mb-4">
+                    <div class="card-body d-flex flex-column flex-md-row flex-wrap gap-3 align-items-md-center">
+                        <!-- Search Input -->
+                        <div class="filter-item flex-grow-1 mb-2 mb-md-0" style="min-width: 200px;">
+                            <label for="searchFilterRole" class="form-label visually-hidden">Cari Role</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light"><i class="fas fa-search fa-fw"></i></span>
+                                <input type="text" id="searchFilterRole" class="form-control"
+                                    :placeholder="`Cari di ${viewMode === 'active' ? 'daftar aktif' : 'tempat sampah'}...`"
+                                    v-model.lazy="filters.search" @keyup.enter="applyFilters" :disabled="isLoading" />
+                                <button v-if="filters.search" class="btn btn-outline-secondary" type="button"
+                                    @click="clearSearch" title="Hapus Pencarian">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Apply Button -->
+                        <div class="filter-item ms-md-auto">
+                            <button class="btn btn-sm btn-primary" @click="applyFilters" :disabled="isLoading">
+                                <i class="fas fa-check me-1"></i> Terapkan Filter
+                            </button>
+                        </div>
+                    </div>
                 </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
 
-    <!-- ======================= -->
-    <!--         MODALS          -->
-    <!-- ======================= -->
+                <!-- Feedback Section -->
+                <div class="feedback-section mb-3">
+                     <div v-if="isLoading && (viewMode === 'active' ? !roles.length : !trashedRoles.length)" class="alert alert-info d-flex align-items-center shadow-sm" role="alert">
+                         <div class="spinner-border spinner-border-sm me-3" role="status" aria-hidden="true"></div>
+                         <span>Memuat data role {{ viewMode === 'trashed' ? ' sampah' : '' }}, mohon tunggu...</span>
+                     </div>
+                     <div v-if="error && !showModal" class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert">
+                         <i class="fas fa-exclamation-triangle me-2"></i> {{ error }}
+                         <button type="button" class="btn-close btn-sm" @click="clearError" aria-label="Close"></button>
+                     </div>
+                     <div v-if="successMessage" class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                         <i class="fas fa-check-circle me-2"></i> {{ successMessage }}
+                         <button type="button" class="btn-close btn-sm" @click="successMessage = null" aria-label="Close"></button>
+                     </div>
+                     <div v-if="!isLoading && (viewMode === 'active' ? roles.length === 0 : trashedRoles.length === 0) && !error" class="alert alert-secondary text-center shadow-sm" role="alert">
+                         <i class="fas fa-box-open me-2"></i>
+                         Tidak ada data role ditemukan
+                         <span v-if="filters.search"> sesuai filter</span>
+                         <span v-if="viewMode === 'active' && !filters.search">. Silakan tambahkan role baru.</span>
+                         <span v-if="viewMode === 'trashed' && !filters.search"> di tempat sampah.</span>
+                         <button v-if="filters.search" @click="clearSearch" class="btn btn-sm btn-link p-0 ms-2">Hapus Filter</button>
+                     </div>
+                 </div>
 
-    <!-- Modal Form Tambah/Edit Role -->
-    <div v-if="showModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content shadow-lg">
-          <div class="modal-header">
-            <h5 class="modal-title">
-              <i :class="['fas', isEditing ? 'fa-edit' : 'fa-plus-circle', 'me-2']"></i>
-              {{ isEditing ? 'Edit Role' : 'Tambah Role Baru' }}
-            </h5>
-            <button type="button" class="btn-close" @click="closeModal" aria-label="Close"></button>
-          </div>
-          <div class="modal-body">
-            <div v-if="modalError" class="alert alert-danger alert-dismissible fade show" role="alert">
-               {{ modalError }}
-               <button type="button" class="btn-close btn-sm" @click="modalError = null" aria-label="Close"></button>
-            </div>
-            <form @submit.prevent="saveRole" id="roleForm" class="modern-form">
-              <div class="form-group">
-                <label for="roleName" class="form-label">Nama Role</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="roleName"
-                  v-model.trim="currentRole.name"
-                  required
-                  placeholder="Masukkan nama role (e.g., Administrator)"
-                  :disabled="isSaving"
-                />
-              </div>
-            </form>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-outline-secondary" @click="closeModal" :disabled="isSaving">Batal</button>
-            <button type="submit" form="roleForm" class="btn btn-primary" :disabled="isSaving">
-              <span v-if="isSaving" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              {{ isSaving ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Simpan Role') }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-</div>
-       </div>
-  </div>
+
+                <!-- ======================= -->
+                <!--      ACTIVE TABLE       -->
+                <!-- ======================= -->
+                <div v-if="viewMode === 'active'" class="table-container shadow-sm mb-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle modern-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col" style="width: 5%;">#</th>
+                                    <th scope="col" @click="changeSort('name')" class="sortable-header">
+                                        Nama Role <i :class="getSortIcon('name')"></i>
+                                    </th>
+                                    <th scope="col" style="width: 20%;" @click="changeSort('created_at')" class="sortable-header">
+                                        Dibuat Pada <i :class="getSortIcon('created_at')"></i>
+                                    </th>
+                                    <th scope="col" class="text-center" style="width: 15%;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-if="isLoading">
+                                    <td colspan="4" class="text-center">
+                                        <div class="d-flex justify-content-center align-items-center py-4">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                            <span class="ms-3 text-muted">Memuat data...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr v-for="(role, index) in roles" :key="role.uuid" v-show="!isLoading">
+                                    <td>{{ (pagination.currentPage - 1) * pagination.perPage + index + 1 }}</td>
+                                    <td class="fw-medium">{{ role.name }}</td>
+                                    <td>{{ formatDate(role.created_at) }}</td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <button @click="openEditModal(role)"
+                                                class="btn btn-icon btn-outline-primary" title="Edit Role"
+                                                :disabled="deletingId === role.uuid || restoringId === role.uuid || forceDeletingId === role.uuid">
+                                                <i class="fas fa-pencil-alt"></i>
+                                            </button>
+                                            <button @click="confirmDeleteRole(role.uuid, role.name)"
+                                                class="btn btn-icon btn-outline-danger" title="Pindahkan ke Tempat Sampah"
+                                                :disabled="deletingId === role.uuid || restoringId === role.uuid || forceDeletingId === role.uuid">
+                                                <span v-if="deletingId === role.uuid" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                <i v-else class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- ======================= -->
+                <!--      TRASHED TABLE      -->
+                <!-- ======================= -->
+                 <div v-if="viewMode === 'trashed'" class="table-container shadow-sm mb-4">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle modern-table">
+                            <thead>
+                                <tr>
+                                    <th scope="col" style="width: 5%;">#</th>
+                                    <th scope="col"> <!-- No sorting for trash currently -->
+                                        Nama Role
+                                    </th>
+                                    <th scope="col" style="width: 20%;"> <!-- No sorting for trash currently -->
+                                        Dihapus Pada
+                                    </th>
+                                    <th scope="col" class="text-center" style="width: 20%;">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-if="isLoading">
+                                    <td colspan="4" class="text-center">
+                                        <div class="d-flex justify-content-center align-items-center py-4">
+                                            <div class="spinner-border text-primary" role="status"></div>
+                                            <span class="ms-3 text-muted">Memuat data sampah...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr v-for="(role, index) in trashedRoles" :key="role.uuid" v-show="!isLoading">
+                                     <td>{{ (trashedPagination.currentPage - 1) * trashedPagination.perPage + index + 1 }}</td>
+                                     <td class="fw-medium">{{ role.name }}</td>
+                                     <td>{{ formatDate(role.deleted_at) }}</td> <!-- Assuming deleted_at exists -->
+                                     <td>
+                                        <div class="action-buttons">
+                                            <button @click="restoreRole(role.uuid, role.name)"
+                                                class="btn btn-icon btn-outline-success" title="Pulihkan Role"
+                                                :disabled="restoringId === role.uuid || forceDeletingId === role.uuid || deletingId === role.uuid">
+                                                <span v-if="restoringId === role.uuid" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                <i v-else class="fas fa-undo-alt"></i>
+                                            </button>
+                                            <button @click="confirmForceDeleteRole(role.uuid, role.name)"
+                                                class="btn btn-icon btn-outline-danger" title="Hapus Permanen"
+                                                :disabled="forceDeletingId === role.uuid || restoringId === role.uuid || deletingId === role.uuid">
+                                                <span v-if="forceDeletingId === role.uuid" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                <i v-else class="fas fa-times-circle"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                 </div>
+
+
+                <!-- Pagination -->
+                <div v-if="!isLoading && currentTotalPages > 1" class="pagination-controls d-flex justify-content-between align-items-center mt-4 flex-wrap gap-3">
+                     <div class="d-flex align-items-center gap-2">
+                         <label for="perPageSelectRole" class="form-label mb-0 text-muted small">Item/Hal:</label>
+                         <select id="perPageSelectRole" class="form-select form-select-sm" style="width: 75px;"
+                             v-model="filters.per_page"
+                             @change="applyFilters">
+                             <option value="15">15</option>
+                             <option value="25">25</option>
+                             <option value="50">50</option>
+                             <option value="100">100</option>
+                         </select>
+                         <span class="text-muted small ms-2 d-none d-md-inline">
+                             Total {{ currentTotalItems }} role {{ viewMode === 'trashed' ? ' sampah' : ''}}
+                         </span>
+                     </div>
+                     <nav aria-label="Page navigation">
+                         <ul class="pagination pagination-sm mb-0">
+                             <li class="page-item" :class="{ disabled: currentPagination.currentPage <= 1 }">
+                                 <a class="page-link" href="#" @click.prevent="changePage(currentPagination.currentPage - 1)" aria-label="Previous">
+                                     <span aria-hidden="true">«</span>
+                                 </a>
+                             </li>
+                             <li v-for="page in simplePaginationRange" :key="page" class="page-item"
+                                 :class="{ active: page === currentPagination.currentPage, disabled: page === '...' }">
+                                 <a v-if="page !== '...'" class="page-link" href="#" @click.prevent="changePage(page)">{{ page }}</a>
+                                 <span v-else class="page-link">...</span>
+                             </li>
+                             <li class="page-item" :class="{ disabled: currentPagination.currentPage >= currentTotalPages }">
+                                 <a class="page-link" href="#" @click.prevent="changePage(currentPagination.currentPage + 1)" aria-label="Next">
+                                     <span aria-hidden="true">»</span>
+                                 </a>
+                             </li>
+                         </ul>
+                     </nav>
+                 </div>
+
+
+                <!-- ======================= -->
+                <!--         MODAL           -->
+                <!-- ======================= -->
+                <div v-if="showModal" class="modal-overlay" @click.self="closeAndResetModal">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content shadow-lg">
+                            <div class="modal-header">
+                                <h5 class="modal-title">
+                                    <i :class="['fas', isEditing ? 'fa-edit' : 'fa-plus-circle', 'me-2']"></i>
+                                    {{ isEditing ? 'Edit Role' : 'Tambah Role Baru' }}
+                                </h5>
+                                <button type="button" class="btn-close" @click="closeAndResetModal"
+                                    aria-label="Close"></button>
+                            </div>
+                            <div class="modal-body">
+                                <div v-if="modalError" class="alert alert-danger alert-dismissible fade show" role="alert">
+                                    {{ modalError }}
+                                    <button type="button" class="btn-close btn-sm" @click="modalError = null" aria-label="Close"></button>
+                                </div>
+                                <form @submit.prevent="saveRole" id="roleForm" class="modern-form" novalidate>
+                                    <!-- Name Field -->
+                                    <div class="form-group mb-3">
+                                        <label for="roleName" class="form-label">Nama Role <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="roleName" v-model.trim="currentRole.name"
+                                            required placeholder="Masukkan nama role (e.g., Administrator, Editor)" :disabled="isSaving" />
+                                    </div>
+                                     <!-- Removed Status Field -->
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-outline-secondary" @click="closeAndResetModal" :disabled="isSaving">Batal</button>
+                                <button type="submit" form="roleForm" class="btn btn-primary" :disabled="isSaving || !currentRole.name">
+                                    <span v-if="isSaving" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                                    {{ isSaving ? 'Menyimpan...' : (isEditing ? 'Simpan Perubahan' : 'Simpan Role') }}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div> <!-- End Modal -->
+
+            </div> <!-- End .role-manager-container -->
+        </div> <!-- End .container -->
+    </div> <!-- End .dashboard-view -->
 </template>
 
 <script setup>
-// --- PASTE KODE <script setup> LENGKAP DARI JAWABAN SEBELUMNYA UNTUK ROLE DI SINI ---
-import { ref, reactive, onMounted } from 'vue';
+import { ref, reactive, onMounted, computed } from 'vue';
 import axios from 'axios';
 
-// --- Konfigurasi Axios Instance ---
+// --- Axios Instance ---
 const apiClient = axios.create({
-  baseURL: `${process.env.VUE_APP_API_URL}`, // --- SESUAIKAN BASE URL API ANDA ---
+  baseURL: `${process.env.VUE_APP_API_URL || 'http://localhost:8000/api'}`, // Ensure /api is included
   headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' }
 });
 
-// --- Axios Interceptors (Sama seperti Product Manager) ---
+// --- Axios Interceptors (Keep as is) ---
 apiClient.interceptors.request.use(config => {
   try {
-    const userDataString = localStorage.getItem('userData'); // --- GANTI KEY JIKA PERLU ---
-    if (userDataString) {
-      const userData = JSON.parse(userDataString);
-      const token = userData?.token;
-      if (token) {
-        config.headers = config.headers || {};
-        config.headers['Authorization'] = `Bearer ${token}`;
-      } else { console.warn('Token not found in userData'); /* handle redirect? */ }
-    } else { console.warn('userData not found'); /* handle redirect? */ }
-  } catch (e) { console.error("Error reading localStorage:", e); /* handle redirect? */ }
+      const userDataString = localStorage.getItem('userData');
+      if (userDataString) {
+          const userData = JSON.parse(userDataString);
+          const token = userData?.token;
+          if (token) {
+              config.headers = config.headers || {};
+              config.headers['Authorization'] = `Bearer ${token}`;
+          }
+      }
+  } catch (e) { console.error("Error reading localStorage:", e); }
   return config;
-}, error => {
-    console.error('Axios request interceptor error:', error);
-    return Promise.reject(error);
-});
+}, error => Promise.reject(error));
 
 apiClient.interceptors.response.use(response => response, error => {
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-        console.error(`Authentication Error (${error.response.status})`);
-        localStorage.removeItem('userData'); // --- GANTI KEY JIKA PERLU ---
-        alert('Sesi tidak valid. Silakan login kembali.');
-        window.location.href = '/login'; // --- SESUAIKAN PATH LOGIN ---
-        // atau: router.push('/login');
-        return Promise.reject(new Error(`Auth failed: ${error.response.status}`));
-    }
-    return Promise.reject(error);
+  if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      console.error(`Authentication Error (${error.response.status})`);
+      localStorage.removeItem('userData');
+      window.location.href = '/login'; // Fallback
+      return Promise.reject(new Error(`Auth failed: ${error.response.status}`));
+  }
+  if (error.response && error.response.status === 409) {
+      console.warn('Conflict Error (409):', error.response.data?.message);
+  }
+   if (error.response && error.response.status === 404) {
+      console.warn('Not Found Error (404):', error.response.data?.message);
+  }
+  return Promise.reject(error);
 });
+// --- End Axios Setup ---
 
-// --- State ---
+// --- Utility Function ---
+const getErrorMessage = (error, defaultMessage = 'Terjadi kesalahan.') => {
+  if (error?.message?.includes('Auth failed')) return '';
+  if (error?.response) {
+      let apiMessage = error.response.data?.message;
+      const status = error.response.status;
+      if (status === 422 && error.response.data?.errors) {
+          const errors = error.response.data.errors;
+          const firstErrorKey = Object.keys(errors)[0];
+          apiMessage = errors[firstErrorKey]?.[0] || apiMessage || 'Data tidak valid.';
+      } else if (status === 404) {
+          apiMessage = apiMessage || 'Data tidak ditemukan.';
+      } else if (status === 409) {
+           apiMessage = apiMessage || 'Operasi gagal: Role ini masih digunakan oleh pengguna.';
+      } else if (status >= 500) {
+           apiMessage = apiMessage || 'Terjadi masalah pada server.';
+      }
+      return apiMessage || `Error ${status}: ${error.response.statusText || defaultMessage}`;
+  } else if (error?.request) {
+      return 'Tidak dapat terhubung ke server.';
+  }
+  return error?.message || defaultMessage;
+};
+
+// --- Component State ---
 const roles = ref([]);
+const trashedRoles = ref([]);
+const pagination = ref({ currentPage: 1, totalPages: 1, totalItems: 0, perPage: 15 });
+const trashedPagination = ref({ currentPage: 1, totalPages: 1, totalItems: 0, perPage: 15 });
+const trashedCount = ref(0);
+const filters = reactive({ search: '', sort_by: 'name', sort_direction: 'asc', page: 1, per_page: 15 });
 const isLoading = ref(false);
-const error = ref(null); // Error utama halaman
+const isSaving = ref(false);
+const deletingId = ref(null);
+const restoringId = ref(null);
+const forceDeletingId = ref(null);
+const error = ref(null);
+const successMessage = ref(null);
 const showModal = ref(false);
 const isEditing = ref(false);
-const isSaving = ref(false);
-const modalError = ref(null); // Error spesifik di dalam modal
-const currentRole = reactive({ // Gunakan reactive untuk objek
+const modalError = ref(null);
+const viewMode = ref('active');
+const currentRole = reactive({
   uuid: null,
-  name: ''
+  name: '',
 });
 
-// --- Fungsi CRUD ---
-const fetchRoles = async () => {
-  isLoading.value = true;
-  error.value = null;
-  try {
-    const response = await apiClient.get('/roles'); // Endpoint roles
-     // Sesuaikan dengan struktur response API Anda
-    if (response.data && response.data.success) { // Asumsi response.data.success
-      roles.value = response.data.data;
-    } else {
-      // Jika API mengembalikan status sukses tapi data kosong atau format salah
-       throw new Error(response.data.message || 'Failed to fetch roles or data format is incorrect.');
-    }
-  } catch (err) {
-     if (err.message && !err.message.includes('Auth failed')) { // Jangan tampilkan error jika sudah redirect
-        console.error("Error fetching roles:", err);
-        error.value = getErrorMessage(err, 'An error occurred while fetching roles.');
-        roles.value = []; // Kosongkan data jika error
-     }
-  } finally {
-    isLoading.value = false;
-  }
+// --- Computed Properties ---
+const currentPagination = computed(() => viewMode.value === 'active' ? pagination.value : trashedPagination.value);
+const currentTotalPages = computed(() => currentPagination.value.totalPages);
+const currentTotalItems = computed(() => currentPagination.value.totalItems);
+const trashedCountForDisplay = computed(() => trashedCount.value > 99 ? '99+' : trashedCount.value);
+
+const getSortIcon = (column) => {
+  if (viewMode.value !== 'active' || filters.sort_by !== column) return 'fas fa-sort text-muted opacity-50';
+  return filters.sort_direction === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
 };
 
-const saveRole = async () => {
-    if (!currentRole.name.trim()) {
-        modalError.value = "Nama role tidak boleh kosong.";
-        return;
-    }
+const simplePaginationRange = computed(() => {
+  const current = currentPagination.value.currentPage;
+  const last = currentTotalPages.value;
+    if (!last || last <= 1) return last === 1 ? [1] : []; // Handle no/single pages
+  const delta = 1;
+  const range = [];
+  const rangeWithDots = [];
+  let l;
+  range.push(1);
+  for (let i = Math.max(2, current - delta); i <= Math.min(last - 1, current + delta); i++) { range.push(i); }
+  if (last > 1) range.push(last);
+  const uniqueRange = [...new Set(range)].sort((a, b) => a - b); // Ensure sorted unique
+  uniqueRange.forEach((i) => { if (l) { if (i - l === 2) rangeWithDots.push(l + 1); else if (i - l > 2) rangeWithDots.push('...'); } rangeWithDots.push(i); l = i; });
+  return rangeWithDots;
+});
 
-    isSaving.value = true;
-    modalError.value = null;
+
+// --- API Functions ---
+async function fetchRoles() {
+  isLoading.value = true;
+  clearError();
+  filters.page = pagination.value.currentPage;
+  filters.per_page = parseInt(filters.per_page, 10); // Ensure number
+    const params = {
+        page: filters.page,
+        per_page: filters.per_page,
+        sort_by: filters.sort_by,
+        sort_direction: filters.sort_direction,
+        ...(filters.search && { search: filters.search }),
+    };
+
+  try {
+      const response = await apiClient.get('/roles', { params });
+      if (response.data && response.data.data) {
+          roles.value = response.data.data;
+          pagination.value = {
+              currentPage: response.data.meta?.current_page ?? 1,
+              totalPages: response.data.meta?.last_page ?? 1,
+              totalItems: response.data.meta?.total ?? 0,
+              perPage: parseInt(response.data.meta?.per_page ?? filters.per_page, 10),
+          };
+          await fetchTrashCount();
+      } else {
+          roles.value = [];
+          pagination.value = { currentPage: 1, totalPages: 1, totalItems: 0, perPage: filters.per_page };
+      }
+  } catch (err) {
+      error.value = getErrorMessage(err, 'Gagal memuat data role.');
+      roles.value = [];
+      pagination.value = { currentPage: 1, totalPages: 1, totalItems: 0, perPage: filters.per_page };
+  } finally {
+      isLoading.value = false;
+  }
+}
+
+async function fetchTrashedRoles() {
+  isLoading.value = true;
+  clearError();
+  const trashPage = trashedPagination.value.currentPage;
+  const trashPerPage = parseInt(filters.per_page, 10);
+  const params = {
+      page: trashPage,
+      per_page: trashPerPage,
+      ...(filters.search && { search: filters.search }),
+  };
+
+  try {
+      const response = await apiClient.get('/roles/trash', { params });
+       if (response.data && response.data.data) {
+          trashedRoles.value = response.data.data;
+          trashedPagination.value = {
+              currentPage: response.data.meta?.current_page ?? 1,
+              totalPages: response.data.meta?.last_page ?? 1,
+              totalItems: response.data.meta?.total ?? 0,
+              perPage: parseInt(response.data.meta?.per_page ?? trashPerPage, 10),
+          };
+          trashedCount.value = response.data.meta?.total ?? 0;
+      } else {
+          trashedRoles.value = [];
+          trashedPagination.value = { currentPage: 1, totalPages: 1, totalItems: 0, perPage: trashPerPage };
+          trashedCount.value = 0;
+      }
+  } catch (err) {
+      error.value = getErrorMessage(err, 'Gagal memuat data role dari tempat sampah.');
+      trashedRoles.value = [];
+      trashedPagination.value = { currentPage: 1, totalPages: 1, totalItems: 0, perPage: trashPerPage };
+      trashedCount.value = 0;
+  } finally {
+      isLoading.value = false;
+  }
+}
+
+async function fetchTrashCount() {
+  try {
+      const response = await apiClient.get('/roles/trash', { params: { per_page: 1 } });
+      trashedCount.value = response.data.meta?.total ?? 0;
+  } catch (err) {
+      console.error("Failed to fetch trash count:", err);
+  }
+}
+
+async function saveRole() {
+  if (!currentRole.name || !currentRole.name.trim()) {
+      modalError.value = "Nama role tidak boleh kosong."; return;
+  }
+  isSaving.value = true;
+  modalError.value = null;
+  clearError();
+  try {
+      const payload = { name: currentRole.name };
+      const url = isEditing.value ? `/roles/${currentRole.uuid}` : '/roles';
+      const method = isEditing.value ? 'put' : 'post';
+      const response = await apiClient({ method, url, data: payload });
+
+      if ((response.status === 200 || response.status === 201) && response.data?.data) {
+          setSuccessMessage(`Role "${response.data.data.name}" berhasil ${isEditing.value ? 'diperbarui' : 'ditambahkan'}.`);
+          closeAndResetModal();
+          await fetchRoles();
+      } else {
+          throw new Error(response.data?.message || `Gagal ${isEditing.value ? 'memperbarui' : 'membuat'} role.`);
+      }
+  } catch (err) {
+      modalError.value = getErrorMessage(err, `Gagal ${isEditing.value ? 'menyimpan' : 'membuat'} role.`);
+  } finally {
+      isSaving.value = false;
+  }
+}
+
+async function deleteRole(uuid, name) {
+  deletingId.value = uuid;
+  clearError();
+  try {
+      const response = await apiClient.delete(`/roles/${uuid}`);
+      if (response.status === 204) {
+          setSuccessMessage(`Role "${name}" berhasil dipindahkan ke tempat sampah.`);
+          if (roles.value.length === 1 && pagination.value.currentPage > 1) {
+              pagination.value.currentPage--;
+          }
+          await fetchRoles(); // Refreshes active roles & trash count
+      } else {
+           throw new Error(response.data?.message || 'Gagal menghapus role.');
+      }
+  } catch (err) {
+      error.value = getErrorMessage(err, `Gagal memindahkan role "${name}" ke tempat sampah.`);
+  } finally {
+      deletingId.value = null;
+  }
+}
+
+async function restoreRole(uuid, name) {
+  restoringId.value = uuid;
+  clearError();
+  try {
+      const response = await apiClient.post(`/roles/restore/${uuid}`);
+      if (response.status === 200 && response.data?.message) {
+           setSuccessMessage(response.data.message || `Role "${name}" berhasil dipulihkan.`);
+          if (trashedRoles.value.length === 1 && trashedPagination.value.currentPage > 1) {
+              trashedPagination.value.currentPage--;
+          }
+           await fetchTrashedRoles();
+      } else {
+          throw new Error(response.data?.message || `Gagal memulihkan role "${name}".`);
+      }
+  } catch (err) {
+      error.value = getErrorMessage(err, `Gagal memulihkan role "${name}".`);
+  } finally {
+      restoringId.value = null;
+  }
+}
+
+// --- CORRECTED forceDeleteRole with Optimistic UI Update ---
+async function forceDeleteRole(uuid, name) {
+    forceDeletingId.value = uuid;
+    clearError();
+
+    // Find index before API call
+    const indexToDelete = trashedRoles.value.findIndex(role => role.uuid === uuid);
+
     try {
-        let response;
-        const payload = { name: currentRole.name };
-        const url = isEditing.value ? `/roles/${currentRole.uuid}` : '/roles';
-        const method = isEditing.value ? 'put' : 'post';
+        const response = await apiClient.delete(`/roles/force-delete/${uuid}`);
 
-        response = await apiClient({ method, url, data: payload });
+        // Expect 204 No Content from controller
+        if (response.status === 204) {
+            setSuccessMessage(`Role "${name}" berhasil dihapus permanen.`);
 
-        // Sesuaikan pengecekan sukses dengan response API Anda
-        if (response.data && response.data.success) {
-            closeModal();
-            await fetchRoles(); // Tunggu fetch selesai
-            // Tampilkan notifikasi sukses (opsional)
-            // Contoh: alert(response.data.message || `Role ${isEditing.value ? 'updated' : 'created'} successfully!`);
+            // Optimistic UI Update: Remove immediately from local array
+            if (indexToDelete > -1) {
+                trashedRoles.value.splice(indexToDelete, 1);
+            }
+
+            // Check if current page became empty *after* splicing
+            const needsPageDecrement = trashedRoles.value.length === 0 && trashedPagination.value.currentPage > 1;
+
+            if (needsPageDecrement) {
+                 trashedPagination.value.currentPage--;
+            }
+
+            // Fetch the definitive state from the server to update counts/pagination
+            // and ensure consistency. This will use the potentially decremented page number.
+            await fetchTrashedRoles();
+
         } else {
-            // Error logis dari API
-             throw new Error(response.data.message || `Failed to ${isEditing.value ? 'update' : 'create'} role.`);
+             // Handle unexpected success status (though 204 is expected)
+             throw new Error(response.data?.message || `Gagal menghapus role "${name}" secara permanen (status: ${response.status}).`);
         }
     } catch (err) {
-         if (err.message && !err.message.includes('Auth failed')) {
-            console.error(`Error ${isEditing.value ? 'updating' : 'creating'} role:`, err);
-            modalError.value = getErrorMessage(err, `An error occurred while ${isEditing.value ? 'saving' : 'creating'} the role.`);
-         }
+        // Handle API errors (404, 409, 500, network issues)
+        error.value = getErrorMessage(err, `Gagal menghapus role "${name}" secara permanen.`);
+        // No need to revert splice here, as it only happens on 204 success.
+        // If needed, a full refresh fetch could be added here for extreme robustness,
+        // but generally showing the error is sufficient.
     } finally {
-        isSaving.value = false;
+        forceDeletingId.value = null;
     }
-};
+}
+// --- End of CORRECTED forceDeleteRole ---
 
-const deleteRole = async (uuid) => {
-  // Bisa tambahkan state loading/disabled spesifik untuk tombol delete
-  error.value = null; // Reset error utama
-  try {
-    const response = await apiClient.delete(`/roles/${uuid}`);
-     // Sesuaikan pengecekan sukses dengan response API Anda
-    if (response.data && response.data.success) {
-       await fetchRoles(); // Tunggu refresh data
-       // Notifikasi sukses (opsional)
-       // Contoh: alert(response.data.message || 'Role deleted successfully!');
-    } else {
-        // Error logis dari API saat delete
-         throw new Error(response.data.message || 'Failed to delete role.');
-    }
-  } catch (err) {
-     if (err.message && !err.message.includes('Auth failed')) {
-        console.error("Error deleting role:", err);
-        error.value = getErrorMessage(err, 'An error occurred while deleting the role.');
-        setTimeout(() => { error.value = null; }, 7000); // Hapus error setelah beberapa saat
-     }
-  } finally {
-     // Matikan state loading/disabled delete jika ada
+// --- UI Functions ---
+function applyFilters() {
+  if (viewMode.value === 'active') {
+      pagination.value.currentPage = 1;
+      fetchRoles();
+  } else {
+      trashedPagination.value.currentPage = 1;
+      fetchTrashedRoles();
   }
-};
+}
 
-// --- Fungsi Bantuan Modal ---
-const openAddModal = () => {
-  isEditing.value = false;
-  // Reset reactive object
-  Object.assign(currentRole, { uuid: null, name: '' });
-  modalError.value = null;
+function clearSearch() {
+  if (filters.search) {
+      filters.search = '';
+      applyFilters();
+  }
+}
+
+function clearError() {
   error.value = null;
-  showModal.value = true;
-};
+}
 
-const openEditModal = (role) => {
-  isEditing.value = true;
-  // Salin properti ke reactive object
-  Object.assign(currentRole, { uuid: role.uuid, name: role.name });
-  modalError.value = null;
-  error.value = null;
-  showModal.value = true;
-};
+function setSuccessMessage(message) {
+  successMessage.value = message;
+  setTimeout(() => { successMessage.value = null; }, 4000);
+}
 
-const closeModal = () => {
-  showModal.value = false;
-  // Opsional: Reset currentRole ke state awal jika cancel edit
-  // if (isEditing.value) { Object.assign(currentRole, { uuid: null, name: '' }); }
-  // isEditing.value = false;
-  // isSaving.value = false;
-  // modalError.value = null;
-};
 
-const confirmDeleteRole = (uuid, name) => { // Terima nama role
-    if (confirm(`Apakah Anda yakin ingin menghapus role "${name}"? Tindakan ini tidak dapat dibatalkan.`)) { // Gunakan nama di prompt
-        deleteRole(uuid);
-    }
-};
-
-// --- Fungsi Utilitas ---
-const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    try {
-        return new Date(dateString).toLocaleString('id-ID', { // Format Indonesia
-            dateStyle: 'medium',
-            timeStyle: 'short'
-        });
-    } catch (e) {
-        console.error("Error formatting date:", dateString, e);
-        return dateString;
-    }
-};
-
-const getErrorMessage = (error, defaultMessage = 'An unexpected error occurred.') => {
-    if (error.response) {
-        let apiMessage = error.response.data?.message;
-        if (error.response.status === 422 && error.response.data?.errors) {
-             const errors = error.response.data.errors;
-             const firstErrorKey = Object.keys(errors)[0];
-             if (firstErrorKey && Array.isArray(errors[firstErrorKey]) && errors[firstErrorKey].length > 0) {
-                 apiMessage = errors[firstErrorKey][0];
-             } else {
-                 apiMessage = apiMessage || 'Validation failed.';
-             }
+function changePage(page) {
+    if (isLoading.value) return; // Prevent page change while loading
+    if (viewMode.value === 'active') {
+        if (page >= 1 && page <= pagination.value.totalPages && page !== pagination.value.currentPage) {
+            pagination.value.currentPage = page;
+            fetchRoles();
         }
-        // Jangan tampilkan jika sudah di-handle interceptor
-        if (error.response.status === 401 || error.response.status === 403) return '';
-        return apiMessage || `Error ${error.response.status}: ${error.response.statusText || defaultMessage}`;
-    } else if (error.request) {
-        return 'Could not connect to server. Check network or API status.';
     } else {
-         if (error.message && error.message.includes('Auth failed')) return ''; // Sudah redirect
-        return error.message || defaultMessage;
+        if (page >= 1 && page <= trashedPagination.value.totalPages && page !== trashedPagination.value.currentPage) {
+            trashedPagination.value.currentPage = page;
+            fetchTrashedRoles();
+        }
     }
+}
+
+function changeSort(column) {
+  if (viewMode.value !== 'active' || isLoading.value) return;
+
+  if (filters.sort_by === column) {
+      filters.sort_direction = filters.sort_direction === 'asc' ? 'desc' : 'asc';
+  } else {
+      filters.sort_by = column;
+      filters.sort_direction = 'asc';
+  }
+  applyFilters();
+}
+
+function openAddModal() {
+  isEditing.value = false;
+  modalError.value = null;
+  clearError();
+  Object.assign(currentRole, { uuid: null, name: '' });
+  showModal.value = true;
+}
+
+function openEditModal(role) {
+  isEditing.value = true;
+  modalError.value = null;
+  clearError();
+    Object.assign(currentRole, { uuid: role.uuid, name: role.name });
+  showModal.value = true;
+}
+
+function closeAndResetModal() {
+  showModal.value = false;
+  isEditing.value = false;
+  isSaving.value = false;
+  modalError.value = null;
+  Object.assign(currentRole, { uuid: null, name: '' });
+}
+
+function confirmDeleteRole(uuid, name) {
+  if (confirm(`Apakah Anda yakin ingin memindahkan role "${name}" ke tempat sampah? Pengguna dengan role ini tidak akan terpengaruh.`)) {
+      deleteRole(uuid, name);
+  }
+}
+
+function confirmForceDeleteRole(uuid, name) {
+   if (confirm(`PERHATIAN!\nApakah Anda yakin ingin menghapus role "${name}" secara permanen?\n\nTindakan ini tidak dapat diurungkan. Pastikan tidak ada pengguna yang masih terkait dengan role ini (meskipun API akan memeriksa kembali).`)) {
+      forceDeleteRole(uuid, name);
+  }
+}
+
+function switchViewMode(mode) {
+  if (mode === viewMode.value || isLoading.value) return;
+  viewMode.value = mode;
+  clearError();
+    successMessage.value = null; // Also clear success message
+  if (mode === 'active') {
+       pagination.value.currentPage = 1;
+       fetchRoles();
+   } else {
+       trashedPagination.value.currentPage = 1;
+       fetchTrashedRoles();
+   }
+}
+
+
+// --- Utility Functions ---
+const formatDate = (dateString) => {
+  if (!dateString) return '-';
+  try {
+      return new Date(dateString).toLocaleString('id-ID', {
+          day: '2-digit', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', hour12: false
+      });
+  } catch (e) {
+      console.error("Error formatting date:", dateString, e);
+      return dateString;
+  }
 };
 
 // --- Lifecycle Hook ---
 onMounted(() => {
   fetchRoles();
 });
-// --- END SCRIPT ---
+
 </script>
 
-<style scoped>
-/* --- PASTE SELURUH BLOK STYLE DARI ProductManagerView.vue DI SINI --- */
-/* --- Ganti .product-manager-container menjadi .role-manager-container --- */
-:root {
-  --font-family-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-  --primary-color: #4F46E5; --primary-hover: #4338CA; --secondary-color: #6B7280; --secondary-hover: #4B5563;
-  --danger-color: #EF4444; --danger-hover: #DC2626; --warning-color: #F59E0B; --warning-hover: #D97706;
-  --success-color: #10B981; --success-hover: #059669; --info-color: #3B82F6; --info-hover: #2563EB;
-  --light-gray: #F3F4F6; --medium-gray: #D1D5DB; --dark-gray: #374151; --text-color: var(--dark-gray);
-  --text-muted: var(--secondary-color); --border-color: #E5E7EB; --border-radius: 0.375rem;
-  --border-radius-lg: 0.5rem; --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-}
-.role-manager-container { /* <-- NAMA CLASS DIUBAH */
-    font-family: var(--font-family-sans-serif); color: var(--text-color); background-color: #F9FAFB;
-    padding: 2rem; max-width: 1280px; margin: 2rem auto; border-radius: var(--border-radius-lg);
-}
-.page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); }
-.page-title { font-size: 1.875rem; font-weight: 600; color: var(--dark-gray); margin: 0; }
-.btn { display: inline-flex; align-items: center; justify-content: center; font-weight: 500; line-height: 1.5; text-align: center; text-decoration: none; vertical-align: middle; cursor: pointer; user-select: none; background-color: transparent; border: 1px solid transparent; padding: 0.625rem 1.25rem; font-size: 0.875rem; border-radius: var(--border-radius); transition: color .15s ease-in-out,background-color .15s ease-in-out,border-color .15s ease-in-out,box-shadow .15s ease-in-out; }
-.btn-primary { background-color: var(--primary-color); border-color: var(--primary-color); color: white; }
-.btn-primary:hover { background-color: var(--primary-hover); border-color: var(--primary-hover); }
-.btn-lg { padding: 0.75rem 1.5rem; font-size: 1rem; } .btn i.me-1 { margin-right: 0.35rem; } .btn i.me-2 { margin-right: 0.5rem; }
-.btn:disabled { cursor: not-allowed; opacity: 0.65; }
-.feedback-section { margin-bottom: 1.5rem; }
-.alert { border: none; border-radius: var(--border-radius); padding: 1rem 1.25rem; display: flex; align-items: center; }
-.alert i { font-size: 1.2em; margin-right: 0.75rem; }
-.alert-info { background-color: #EFF6FF; color: #1E40AF; } .alert-danger { background-color: #FEF2F2; color: #991B1B; }
-.alert-secondary { background-color: var(--light-gray); color: var(--secondary-color); }
-.alert-warning { background-color: #FFFBEB; color: #92400E; } .alert-light { background-color: var(--light-gray); color: var(--text-color); border: 1px solid var(--border-color); }
-.spinner-border { display: inline-block; width: 2rem; height: 2rem; vertical-align: -0.125em; border: 0.25em solid currentColor; border-right-color: transparent; border-radius: 50%; animation: .75s linear infinite spinner-border; }
-.spinner-border-sm { width: 1rem; height: 1rem; border-width: 0.2em; }
-@keyframes spinner-border { to { transform: rotate(360deg); } }
-.visually-hidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
-.text-center { text-align: center !important; } .text-muted { color: var(--text-muted) !important; } .fst-italic { font-style: italic !important; } .fw-medium { font-weight: 500 !important; } .d-block { display: block !important; }
-.mt-1 { margin-top: 0.25rem !important; } .mt-2 { margin-top: 0.5rem !important; } .mt-3 { margin-top: 1rem !important; } .mt-4 { margin-top: 1.5rem !important; }
-.mb-3 { margin-bottom: 1rem !important; }
-.table-container { background-color: white; border-radius: var(--border-radius-lg); border: 1px solid var(--border-color); overflow: hidden; }
-.table-responsive { overflow-x: auto; }
-.modern-table { border-collapse: separate; border-spacing: 0; width: 100%; margin-bottom: 0; }
-.modern-table thead { background-color: var(--light-gray); }
-.modern-table th { padding: 0.875rem 1.25rem; text-align: left; font-size: 0.75rem; font-weight: 600; color: var(--secondary-color); text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
-.modern-table tbody tr { transition: background-color 0.15s ease; }
-.modern-table tbody tr:hover { background-color: #F9FAFB; }
-.modern-table td { padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--border-color); vertical-align: middle; font-size: 0.875rem; color: var(--text-color); }
-.modern-table tbody tr:last-child td { border-bottom: none; }
-.action-buttons { display: flex; justify-content: center; align-items: center; gap: 0.5rem; }
-.btn-icon { padding: 0.4rem; line-height: 1; border-radius: var(--border-radius); width: 32px; height: 32px; display: inline-flex; justify-content: center; align-items: center; }
-.btn-icon i { font-size: 0.9rem; }
-.btn-outline-primary { color: var(--primary-color); border-color: var(--primary-color); } .btn-outline-primary:hover { background-color: #EEF2FF; color: var(--primary-hover); border-color: var(--primary-hover); }
-.btn-outline-danger { color: var(--danger-color); border-color: var(--danger-color); } .btn-outline-danger:hover { background-color: #FEF2F2; color: var(--danger-hover); border-color: var(--danger-hover); }
-.btn-outline-secondary { color: var(--secondary-color); border-color: var(--secondary-color); } .btn-outline-secondary:hover { background-color: var(--light-gray); color: var(--dark-gray); border-color: var(--dark-gray); }
-.modal-overlay { position: fixed; inset: 0; background-color: rgba(17, 24, 39, 0.6); backdrop-filter: blur(4px); display: flex; justify-content: center; align-items: center; z-index: 1050; padding: 1rem; overflow-y: auto; }
-.modal-dialog { background-color: white; border-radius: var(--border-radius-lg); margin: auto; max-height: 90vh; display: flex; flex-direction: column; width: 100%; box-shadow: none; border: none; pointer-events: all; max-width: 500px; /* Ukuran default modal role */}
-.modal-content { border: none; border-radius: inherit; box-shadow: var(--shadow-lg); overflow: hidden; flex: 1; display: flex; flex-direction: column; max-height: 100%; }
-.modal-header { background-color: var(--light-gray); padding: 1rem 1.5rem; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
-.modal-title { font-size: 1.125rem; font-weight: 600; color: var(--dark-gray); } .modal-title i { color: var(--primary-color); }
-.btn-close { background: none; border: none; font-size: 1.5rem; opacity: 0.7; transition: opacity 0.2s ease; cursor: pointer; padding: 0.5rem; margin: -0.5rem; } .btn-close:hover { opacity: 1; }
-.modal-body { padding: 1.5rem; overflow-y: auto; flex-grow: 1; }
-.modal-footer { background-color: var(--light-gray); padding: 1rem 1.5rem; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 0.75rem; flex-shrink: 0; }
-.modern-form .form-group { margin-bottom: 1.25rem; }
-.modern-form .form-label { display: block; font-size: 0.875rem; font-weight: 500; color: var(--dark-gray); margin-bottom: 0.5rem; }
-.modern-form .form-control { display: block; width: 100%; padding: 0.625rem 0.875rem; font-size: 0.875rem; font-weight: 400; line-height: 1.5; color: var(--text-color); background-color: #fff; background-clip: padding-box; border: 1px solid var(--medium-gray); appearance: none; border-radius: var(--border-radius); transition: border-color .15s ease-in-out,box-shadow .15s ease-in-out; }
-.modern-form .form-control::placeholder { color: var(--medium-gray); opacity: 1; }
-.modern-form .form-control:focus { border-color: var(--primary-color); outline: 0; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2); }
-@media (max-width: 768px) {
-  .role-manager-container { padding: 1rem; }
-  .page-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
-  .modern-table th, .modern-table td { padding: 0.75rem; white-space: normal; }
-  .action-buttons { justify-content: flex-start; }
-  .modal-overlay { padding: 0.5rem; }
-  .modal-dialog { max-width: calc(100% - 1rem); margin: 0.5rem; max-height: calc(100% - 1rem); }
-  .modal-body { padding: 1rem; }
-  .modal-footer { padding: 0.75rem 1rem; }
-}
-</style>
