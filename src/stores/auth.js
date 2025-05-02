@@ -65,9 +65,10 @@ export const useAuthStore = defineStore('auth', {
       try {
         // Using hardcoded URL as per original code
         const response = await axios.post(
-          'http://back-end.test/api/login',
+          `${process.env.VUE_APP_API_URL}/login`,
           credentials
         );
+        
 
         console.log('Login API Response:', response.data);
 

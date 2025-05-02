@@ -48,8 +48,7 @@
               </li>
               <!-- Product Management (Conditional based on canViewProductionOrders - nama computed mungkin perlu diubah?) -->
               <!-- Jika viewnya ProductManagerView, sebaiknya permission/computed juga terkait 'product' -->
-              <li v-if="canViewProductManagement"> <!-- PERBAIKAN: Ganti nama computed jika perlu -->
-                <!-- PERBAIKAN: Nama route diubah -->
+              <li> 
                 <router-link :to="{ name: 'product-management' }" @click="closeMobileMenuAndDropdown">
                   Products <!-- PERBAIKAN: Ubah teks link jika perlu -->
                 </router-link>
@@ -115,10 +114,10 @@ const hasRole = (roleName) => {
 const canViewUserManagement = computed(() => hasRole('administrator'));
 
 // PERBAIKAN: Ganti nama computed agar sesuai dengan menu (opsional tapi lebih jelas)
-const canViewProductManagement = computed(() => {
-    // Sesuaikan role yang boleh akses Product Management di sini
-    return hasRole('administrator') || hasRole('operator'); // Contoh
-});
+// const canViewProductManagement = computed(() => {
+//     // Sesuaikan role yang boleh akses Product Management di sini
+//     return hasRole('administrator') || hasRole('operator'); // Contoh
+// });
 // Anda bisa hapus canViewProductionOrders jika tidak dipakai lagi
 // const canViewProductionOrders = computed(() => ... );
 
