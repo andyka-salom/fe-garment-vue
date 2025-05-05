@@ -21,12 +21,9 @@
 
     <!-- Konten Utama (Router View) -->
     <main class="main-content">
-      <!-- PERBAIKAN: Ambil 'route' dari v-slot dan tambahkan :key -->
       <router-view v-slot="{ Component, route }">
-         <!-- <transition name="fade" mode="out-in"> -->
               <!-- Gunakan route.path atau route.fullPath sebagai kunci unik -->
               <component :is="Component" :key="route.path" />
-         <!-- </transition> -->
       </router-view>
     </main>
 
@@ -46,12 +43,12 @@
 </template>
 
 <script setup>
-// Impor yang diperlukan (sudah benar)
+// Impor yang diperlukan
 import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router'; // Hanya useRouter yang dipakai di script ini
-import { useAuthStore } from './stores/auth'; // Sesuaikan path jika perlu
+import { useRouter } from 'vue-router';
+import { useAuthStore } from './stores/auth';
 
-// Impor komponen (sudah benar)
+// Impor komponen
 import AppNavbar from './components/AppNavbar.vue';
 import AppFooter from './components/AppFooter.vue';
 import LoginForm from './components/LoginForm.vue';
@@ -59,19 +56,19 @@ import LoginForm from './components/LoginForm.vue';
 const router = useRouter();
 const authStore = useAuthStore();
 
-// State untuk modal dan notifikasi (sudah benar)
+// State untuk modal dan notifikasi
 const showLoginModal = ref(false);
 const showNotification = ref(false);
 const notificationMessage = ref('');
 const notificationType = ref('info'); // 'info', 'success', 'error', 'warning'
 const notificationTimeout = ref(null);
 
-// Computed properties untuk status login dari store (sudah benar)
+// Computed properties untuk status login dari store
 const isUserLoggedIn = computed(() => authStore.isAuthenticated);
 const loggedInUserName = computed(() => authStore.userName);
 const loggedInUserRole = computed(() => authStore.userRole);
 
-// Fungsi untuk menampilkan notifikasi (sudah benar)
+// Fungsi untuk menampilkan notifikasi
 const displayNotification = (message, type = 'info', duration = 5000) => {
   if (notificationTimeout.value) clearTimeout(notificationTimeout.value);
   notificationMessage.value = message;
@@ -82,19 +79,19 @@ const displayNotification = (message, type = 'info', duration = 5000) => {
   }, duration);
 };
 
-// Fungsi untuk menutup notifikasi (sudah benar)
+// Fungsi untuk menutup notifikasi
 const closeNotification = () => {
   if (notificationTimeout.value) clearTimeout(notificationTimeout.value);
   showNotification.value = false;
 };
 
-// Fungsi untuk menutup modal login (sudah benar)
+// Fungsi untuk menutup modal login
 const closeLoginModal = () => {
     authStore.clearError(); // Bersihkan error di store saat modal ditutup
     showLoginModal.value = false;
 };
 
-// Handler saat login sukses (sudah benar)
+// Handler saat login sukses
 const handleLoginSuccess = () => {
   closeLoginModal(); // Tutup modal
   displayNotification(`Login berhasil! Selamat datang, ${authStore.userName || 'Pengguna'}.`, 'success');
@@ -104,13 +101,13 @@ const handleLoginSuccess = () => {
    }
 };
 
-// Handler saat login error (sudah benar)
+// Handler saat login error
 const handleLoginError = (errorMessageFromEmit) => {
   // Tampilkan error dari store atau dari emit komponen login
   displayNotification(authStore.error || errorMessageFromEmit || 'Login gagal. Silakan coba lagi.', 'error');
 };
 
-// Handler saat logout (sudah benar)
+// Handler saat logout
 const handleLogout = () => {
   const name = authStore.userName;
   authStore.logout();
@@ -118,7 +115,7 @@ const handleLogout = () => {
   router.push('/'); // Kembali ke halaman home
 };
 
-// Lifecycle hook onMounted (sudah benar)
+// Lifecycle hook onMounted
 onMounted(() => {
   authStore.initializeAuthHeader(); // Inisialisasi header auth saat app mount
   // Hapus log yang tidak perlu di production
